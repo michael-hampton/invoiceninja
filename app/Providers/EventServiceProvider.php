@@ -14,7 +14,7 @@ namespace App\Providers;
 use App\Events\Client\ClientWasCreated;
 use App\Events\Contact\ContactLoggedIn;
 use App\Events\Invoice\InvoiceWasCreated;
-use App\Events\Invoice\InvoiceWasEmailed;
+use App\Events\Invoice\PaymentWasEmailed;
 use App\Events\Invoice\InvoiceWasMarkedSent;
 use App\Events\Invoice\InvoiceWasPaid;
 use App\Events\Invoice\InvoiceWasUpdated;
@@ -52,7 +52,7 @@ class EventServiceProvider extends ServiceProvider
             ], // [3]
             \Codedge\Updater\Events\UpdateSucceeded::class => [
                 \Codedge\Updater\Listeners\SendUpdateSucceededNotification::class
-            ], 
+            ],
         UserWasCreated::class => [
             SendVerificationNotification::class,
         ],
@@ -91,7 +91,7 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         //Invoices
-        
+
         InvoiceWasMarkedSent::class => [
             CreateInvoiceHtmlBackup::class,
         ],
@@ -106,13 +106,13 @@ class EventServiceProvider extends ServiceProvider
         InvoiceWasPaid::class => [
             CreateInvoiceHtmlBackup::class,
         ],
-        InvoiceWasEmailed::class => [
+        PaymentWasEmailed::class => [
             InvoiceEmailActivity::class,
         ],
         InvoiceWasEmailedAndFailed::class => [
             InvoiceEmailFailedActivity::class,
         ],
-        
+
     ];
 
     /**

@@ -11,8 +11,8 @@
 
 namespace App\Jobs\Invoice;
 
-use App\Events\Invoice\InvoiceWasEmailed;
-use App\Events\Invoice\InvoiceWasEmailedAndFailed;
+use App\Events\Invoice\PaymentWasEmailed;
+use App\Events\Invoice\PaymentWasEmailedAndFailed;
 use App\Libraries\MultiDB;
 use App\Mail\TemplateEmail;
 use App\Models\Company;
@@ -75,13 +75,13 @@ class EmailInvoice implements ShouldQueue
                 ->send(new TemplateEmail($message_array, $template_style, $invitation->contact->user, $invitation->contact->client));
 
                 if (count(Mail::failures()) > 0) {
-                    event(new InvoiceWasEmailedAndFailed($this->invoice, Mail::failures()));
+                    event(new PaymentWasEmailedAndFailed($this->invoice, Mail::failures()));
                     
                     return $this->logMailError($errors);
                 }
 
                 //fire any events
-                event(new InvoiceWasEmailed($this->invoice));
+                event(new PaymentWasEmailed($this->invoice));
 
                 //sleep(5);
             }

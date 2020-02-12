@@ -1,8 +1,9 @@
 <?php
 namespace App\Jobs\Quote;
 
-use App\Events\Invoice\InvoiceWasEmailed;
-use App\Events\Invoice\InvoiceWasEmailedAndFailed;
+use App\Events\Quote\QuoteWasEmailed;
+use App\Events\Quote\QuoteWasEmailedAndFailed;
+use App\Jobs\Util\SystemLogger;
 use App\Libraries\MultiDB;
 use App\Mail\TemplateEmail;
 use App\Models\Company;
@@ -22,7 +23,7 @@ class EmailQuote implements ShouldQueue
     public $quote;
 
     public $message_array = [];
-    
+
     private $company;
 
     /**
@@ -51,27 +52,27 @@ class EmailQuote implements ShouldQueue
         //todo - change runtime config of mail driver if necessary
 
         $template_style = $this->quote->client->getSetting('email_style');
-        
+
         $this->quote->invitations->each(function ($invitation) use ($template_style) {
-            if ($invitation->contact->send_quote && $invitation->contact->email) {
+            if ($invitation->contact->email) {
                 $message_array = $this->quote->getEmailData('', $invitation->contact);
                 $message_array['title'] = &$message_array['subject'];
                 $message_array['footer'] = "Sent to ".$invitation->contact->present()->name();
-                
+
                 //change the runtime config of the mail provider here:
-                
+
                 //send message
                 Mail::to($invitation->contact->email, $invitation->contact->present()->name())
                 ->send(new TemplateEmail($message_array, $template_style, $invitation->contact->user, $invitation->contact->client));
 
                 if (count(Mail::failures()) > 0) {
-                    //event(new QuoteWasEmailedAndFailed($this->quote, Mail::failures()));
-                    
+                    event(new QuoteWasEmailedAndFailed($this->quote, Mail::failures()));
+
                     return $this->logMailError($errors);
                 }
 
                 //fire any events
-                //event(new QuoteWasEmailed($this->quote));
+                event(new QuoteWasEmailed($this->quote));
 
                 //sleep(5);
             }

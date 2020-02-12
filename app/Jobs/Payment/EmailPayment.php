@@ -1,8 +1,9 @@
 <?php
 namespace App\Jobs\Payment;
 
-use App\Events\Invoice\InvoiceWasEmailed;
-use App\Events\Invoice\InvoiceWasEmailedAndFailed;
+use App\Events\Payment\PaymentWasEmailed;
+use App\Events\Payment\PaymentWasEmailedAndFailed;
+use App\Jobs\Util\SystemLogger;
 use App\Libraries\MultiDB;
 use App\Mail\TemplateEmail;
 use App\Models\Company;
@@ -22,7 +23,7 @@ class EmailPayment implements ShouldQueue
     public $payment;
 
     public $message_array = [];
-    
+
     private $company;
 
     /**
@@ -51,27 +52,27 @@ class EmailPayment implements ShouldQueue
         //todo - change runtime config of mail driver if necessary
 
         $template_style = $this->payment->client->getSetting('email_style');
-        
+
         $this->payment->client->contacts->each(function ($contact) use ($template_style) {
-            if ($contact->send_invoice && $contact->email) {
-                $message_array = $this->invoice->getEmailData('', $contact);
+            if ($contact->email) {
+                $message_array = $this->payment->getEmailData('', $contact);
                 $message_array['title'] = &$message_array['subject'];
                 $message_array['footer'] = "Sent to ".$contact->present()->name();
-                
+
                 //change the runtime config of the mail provider here:
-                
+
                 //send message
                 Mail::to($contact->email, $contact->present()->name())
                 ->send(new TemplateEmail($message_array, $template_style, $contact->user, $contact->client));
 
                 if (count(Mail::failures()) > 0) {
-                    event(new InvoiceWasEmailedAndFailed($this->payment, Mail::failures()));
-                    
+                    event(new PaymentWasEmailedAndFailed($this->payment, Mail::failures()));
+
                     return $this->logMailError($errors);
                 }
 
                 //fire any events
-                event(new InvoiceWasEmailed($this->invoice));
+                event(new PaymentWasEmailed($this->payment));
 
                 //sleep(5);
             }
