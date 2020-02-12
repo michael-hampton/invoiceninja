@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Activity extends StaticModel
 {
-
     const CREATE_CLIENT=1;
     const ARCHIVE_CLIENT=2;
     const DELETE_CLIENT=3;
@@ -69,6 +68,7 @@ class Activity extends StaticModel
     const RESTORE_USER=52;
     const MARK_SENT_INVOICE=53;
     const PAID_INVOICE=54;
+    const EMAIL_INVOICE_FAILED=57;
     
     protected $casts = [
         'is_system' => 'boolean',
@@ -79,7 +79,7 @@ class Activity extends StaticModel
 
     public function backup()
     {
-    	return $this->hasOne(Backup::class);
+        return $this->hasOne(Backup::class);
     }
 
     /**

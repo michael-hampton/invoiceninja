@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -27,29 +27,24 @@ class StoreGroupSettingRequest extends Request
 
     public function authorize() : bool
     {
-
         return auth()->user()->can('create', GroupSetting::class);
-
     }
 
     public function rules()
     {
-        $this->sanitize();
-
         $rules['name'] = 'required';
         $rules['settings'] = new ValidClientGroupSettingsRule();
 
         return $rules;
     }
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
         
         $input['settings'] = ClientSettings::defaults();
         
-        $this->replace($input);   
-
+        $this->replace($input);
     }
 
 
@@ -59,6 +54,4 @@ class StoreGroupSettingRequest extends Request
             'settings' => 'settings must be a valid json structure'
         ];
     }
-
-
 }

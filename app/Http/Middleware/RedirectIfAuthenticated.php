@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -26,15 +26,15 @@ class RedirectIfAuthenticated
      */
     public function handle($request, Closure $next, $guard = null)
     {
-      switch ($guard) {
+        switch ($guard) {
         case 'contact':
           if (Auth::guard($guard)->check()) {
-             return redirect()->route('client.dashboard');
+              return redirect()->route('client.dashboard');
           }
           break;
           case 'user':
           if (Auth::guard($guard)->check()) {
-            return redirect()->route('dashboard.index');
+              return redirect()->route('dashboard.index');
           }
           break;
         default:
@@ -43,6 +43,6 @@ class RedirectIfAuthenticated
           }
           break;
       }
-      return $next($request);
+        return $next($request);
     }
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -12,6 +12,8 @@
 namespace App\Jobs\Company;
 
 use App\Factory\CompanyLedgerFactory;
+use App\Libraries\MultiDB;
+use App\Models\Company;
 use App\Models\CompanyLedger;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -28,19 +30,20 @@ class UpdateCompanyLedgerWithPayment
 
     public $payment;
 
+    private $company;
     /**
      * Create a new job instance.
      *
      * @return void
      */
 
-    public function __construct(Payment $payment, float $adjustment)
+    public function __construct(Payment $payment, float $adjustment, Company $company)
     {
-
         $this->payment = $payment;
 
         $this->adjustment = $adjustment;
 
+        $this->company = $company;
     }
 
     /**
@@ -48,8 +51,11 @@ class UpdateCompanyLedgerWithPayment
      *
      * @return void
      */
-    public function handle() 
+    public function handle()
     {
+        MultiDB::setDB($this->company->db);
+
+
         $balance = 0;
         
         /* Get the last record for the client and set the current balance*/
@@ -58,8 +64,9 @@ class UpdateCompanyLedgerWithPayment
                                 ->orderBy('id', 'DESC')
                                 ->first();
 
-        if($ledger)
+        if ($ledger) {
             $balance = $ledger->balance;
+        }
 
 
         $company_ledger = CompanyLedgerFactory::create($this->payment->company_id, $this->payment->user_id);
@@ -69,6 +76,5 @@ class UpdateCompanyLedgerWithPayment
         $company_ledger->save();
 
         $this->payment->company_ledger()->save($company_ledger); //todo add model directive here
-
     }
 }

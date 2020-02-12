@@ -4,7 +4,7 @@ return [
 
     'web_url' => 'https://www.invoiceninja.com',
     'app_name' => env('APP_NAME'),
-    'site_url' => env('APP_URL', 'https://admin.invoiceninja.com'),
+    'site_url' => env('APP_URL', ''),
     'app_domain' => env('APP_DOMAIN', 'invoiceninja.com'),
     'app_version' => '0.0.1',
     'api_version' => '0.0.1',
@@ -38,7 +38,7 @@ return [
     ],
 
     'i18n' => [
-        'timezone_id' => env('DEFAULT_TIMEZONE', 15),
+        'timezone_id' => env('DEFAULT_TIMEZONE', 1),
         'country_id' => env('DEFAULT_COUNTRY', 840), // United Stated
         'currency_id' => env('DEFAULT_CURRENCY', 1),
         'language_id' => env('DEFAULT_LANGUAGE', 1), //en
@@ -59,6 +59,7 @@ return [
         'stripe' => env('STRIPE_KEYS',''),
         'paypal' => env('PAYPAL_KEYS', ''),
         'travis' => env('TRAVIS', false),
+        'test_email' => env('TEST_EMAIL','test@example.com'),
     ],
     'contact' => [
         'email' => env('MAIL_FROM_ADDRESS'),

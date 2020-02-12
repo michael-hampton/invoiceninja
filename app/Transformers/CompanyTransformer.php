@@ -4,13 +4,12 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Transformers;
-
 
 use App\Models\Account;
 use App\Models\Activity;
@@ -18,18 +17,20 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\CompanyGateway;
 use App\Models\CompanyUser;
+use App\Models\Expense;
 use App\Models\GroupSetting;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Project;
+use App\Models\Quote;
+use App\Models\Task;
 use App\Models\TaxRate;
 use App\Models\User;
-use App\Transformers\ActivityTransformer;
-use App\Transformers\CompanyGatewayTransformer;
-use App\Transformers\CompanyUserTransformer;
-use App\Transformers\GroupSettingTransformer;
-use App\Transformers\TaxRateTransformer;
+use App\Transformers\TaskTransformer;
 use App\Utils\Traits\MakesHash;
 
 /**
- * Class AccountTranCompanyTransformersformer.
+ * Class CompanyTransformer.
  */
 class CompanyTransformer extends EntityTransformer
 {
@@ -56,11 +57,15 @@ class CompanyTransformer extends EntityTransformer
         'timezone',
         'language',
         'expenses',
+        'vendors',
         'payments',
         'company_user',
         'groups',
         'company_gateways',
-        'activities'
+        'activities',
+        'quotes',
+        'projects',
+        'tasks',
     ];
 
 
@@ -86,6 +91,7 @@ class CompanyTransformer extends EntityTransformer
             'show_product_cost' => (bool)$company->show_product_cost,
             'enable_invoice_quantity' => (bool)$company->enable_invoice_quantity,
             'enable_product_cost' => (bool)$company->enable_product_cost,
+            'show_product_details' => (bool)$company->show_product_details,
             'enable_product_quantity' => (bool)$company->enable_product_quantity,
             'default_quantity' => (bool)$company->default_quantity,
             'custom_fields' => $company->custom_fields ?: $std,
@@ -93,13 +99,13 @@ class CompanyTransformer extends EntityTransformer
             'industry_id' => (string) $company->industry_id ?: '',
             'first_month_of_year' => (string) $company->first_month_of_year ?: '',
             'first_day_of_week' => (string) $company->first_day_of_week ?: '',
-            'domain' => (string) $company->domain ?: '',
+            'subdomain' => (string) $company->subdomain ?: '',
             'portal_mode' => (string) $company->portal_mode ?: '',
             'portal_domain' => (string) $company->portal_domain ?: '',
             'settings' => $company->settings ?: '',
             'enabled_tax_rates' => (int)$company->enabled_tax_rates,
             'updated_at' => (int)$company->updated_at,
-            'deleted_at' => (int)$company->deleted_at,
+            'archived_at' => (int)$company->deleted_at,
         ];
     }
 
@@ -138,11 +144,39 @@ class CompanyTransformer extends EntityTransformer
         return $this->includeCollection($company->clients, $transformer, Client::class);
     }
 
+    public function includeProjects(Company $company)
+    {
+        $transformer = new ProjectTransformer($this->serializer);
+
+        return $this->includeCollection($company->projects, $transformer, Project::class);
+    }
+
+    public function includeTasks(Company $company)
+    {
+        $transformer = new TaskTransformer($this->serializer);
+
+        return $this->includeCollection($company->tasks, $transformer, Task::class);
+    }
+
+    public function includeExpenses(Company $company)
+    {
+        $transformer = new ExpenseTransformer($this->serializer);
+
+        return $this->includeCollection($company->expenses, $transformer, Expense::class);
+    }
+
+    public function includeVendors(Company $company)
+    {
+        $transformer = new VendorTransformer($this->serializer);
+
+        return $this->includeCollection($company->vendors, $transformer, Vendor::class);
+    }
+
     public function includeGroups(Company $company)
     {
         $transformer = new GroupSettingTransformer($this->serializer);
 
-        return $this->includeCollection($company->groups, $transformer, GroupSetting::class);        
+        return $this->includeCollection($company->groups, $transformer, GroupSetting::class);
     }
 
     public function includeInvoices(Company $company)
@@ -152,21 +186,38 @@ class CompanyTransformer extends EntityTransformer
         return $this->includeCollection($company->invoices, $transformer, Invoice::class);
     }
 
+    public function includeQuotes(Company $company)
+    {
+        $transformer = new QuoteTransformer($this->serializer);
+
+        return $this->includeCollection($company->quotes, $transformer, Quote::class);
+    }
+
     public function includeAccount(Company $company)
     {
-
         $transformer = new AccountTransformer($this->serializer);
 
         return $this->includeItem($company->account, $transformer, Account::class);
-    
     }
 
     public function includeTaxRates(Company $company)
     {
-
         $transformer = new TaxRateTransformer($this->serializer);
 
         return $this->includeCollection($company->tax_rates, $transformer, TaxRate::class);
-    
+    }
+
+    public function includeProducts(Company $company)
+    {
+        $transformer = new ProductTransformer($this->serializer);
+
+        return $this->includeCollection($company->products, $transformer, Product::class);
+    }
+
+    public function includePayments(Company $company)
+    {
+        $transformer = new PaymentTransformer($this->serializer);
+
+        return $this->includeCollection($company->payments, $transformer, Payment::class);
     }
 }

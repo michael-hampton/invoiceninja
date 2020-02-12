@@ -17,6 +17,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Log;
 use Tests\MockAccountData;
 use Tests\TestCase;
@@ -35,18 +36,22 @@ class UploadFileTest extends TestCase
         parent::setUp();
 
         $this->makeTestData();
+
+        $this->withoutMiddleware(
+            ThrottleRequests::class
+        );
     }
 
 
     public function testFileUploadWorks()
     {
+        $image = UploadedFile::fake()->image('avatar.jpg');
 
-        $document = UploadFile::dispatchNow(UploadedFile::fake()->image('avatar.jpg'), $this->invoice->user, $this->invoice->company, $this->invoice);
+        $document = UploadFile::dispatchNow(
+            $image, UploadFile::IMAGE, $this->invoice->user, $this->invoice->company, $this->invoice
+        );
 
         $this->assertNotNull($document);
 
     }
-
-
-
 }

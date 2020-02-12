@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -31,22 +31,18 @@ class StoreCompanyRequest extends Request
 
     public function rules()
     {
-        //$this->sanitize();
         $rules = [];
-        $input = $this->all();
 
         //$rules['name'] = 'required';
         $rules['company_logo'] = 'mimes:jpeg,jpg,png,gif|max:10000'; // max 10000kb
-        $rules['settings'] = new ValidSettingsRule();    
+        $rules['settings'] = new ValidSettingsRule();
     
-        if(isset($rules['portal_mode']) && ($rules['portal_mode'] == 'domain' || $rules['portal_mode'] == 'iframe'))
+        if (isset($rules['portal_mode']) && ($rules['portal_mode'] == 'domain' || $rules['portal_mode'] == 'iframe')) {
             $rules['portal_domain'] = 'sometimes|url';
-        else 
+        } else {
             $rules['portal_domain'] = 'nullable|alpha_num';
+        }
         
         return $rules;
     }
-
-
 }
-

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -35,13 +35,12 @@ class ValidSettingsRule implements Rule
     {
         $data = $this->validateSettings($value);
 
-        if (is_array($data))
-        {
+        if (is_array($data)) {
             $this->return_data = $data;
             return false;
-        }
-        else
+        } else {
             return true;
+        }
     }
 
     /**
@@ -50,9 +49,5 @@ class ValidSettingsRule implements Rule
     public function message()
     {
         return $this->return_data[0]." is not a valid ".$this->return_data[1];
-
     }
-
-
-
 }

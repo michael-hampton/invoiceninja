@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -14,6 +14,7 @@ namespace App\Providers;
 use App\Events\Client\ClientWasCreated;
 use App\Events\Contact\ContactLoggedIn;
 use App\Events\Invoice\InvoiceWasCreated;
+use App\Events\Invoice\PaymentWasEmailed;
 use App\Events\Invoice\InvoiceWasMarkedSent;
 use App\Events\Invoice\InvoiceWasPaid;
 use App\Events\Invoice\InvoiceWasUpdated;
@@ -29,6 +30,8 @@ use App\Listeners\Invoice\CreateInvoiceActivity;
 use App\Listeners\Invoice\CreateInvoiceHtmlBackup;
 use App\Listeners\Invoice\CreateInvoiceInvitation;
 use App\Listeners\Invoice\CreateInvoicePdf;
+use App\Listeners\Invoice\InvoiceEmailActivity;
+use App\Listeners\Invoice\InvoiceEmailFailedActivity;
 use App\Listeners\Invoice\UpdateInvoiceActivity;
 use App\Listeners\Invoice\UpdateInvoiceInvitations;
 use App\Listeners\Invoice\UpdateInvoicePayment;
@@ -44,6 +47,12 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        \Codedge\Updater\Events\UpdateAvailable::class => [
+        \Codedge\Updater\Listeners\SendUpdateAvailableNotification::class
+            ], // [3]
+            \Codedge\Updater\Events\UpdateSucceeded::class => [
+                \Codedge\Updater\Listeners\SendUpdateSucceededNotification::class
+            ],
         UserWasCreated::class => [
             SendVerificationNotification::class,
         ],
@@ -82,7 +91,7 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         //Invoices
-        
+
         InvoiceWasMarkedSent::class => [
             CreateInvoiceHtmlBackup::class,
         ],
@@ -96,7 +105,14 @@ class EventServiceProvider extends ServiceProvider
         ],
         InvoiceWasPaid::class => [
             CreateInvoiceHtmlBackup::class,
-        ]
+        ],
+        PaymentWasEmailed::class => [
+            InvoiceEmailActivity::class,
+        ],
+        InvoiceWasEmailedAndFailed::class => [
+            InvoiceEmailFailedActivity::class,
+        ],
+
     ];
 
     /**
@@ -115,8 +131,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
         parent::boot();
-
     }
 }

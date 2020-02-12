@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -25,12 +25,11 @@ class ClientPortalEnabled
      */
     public function handle($request, Closure $next)
     {
-
-        if(auth()->user()->client->getSetting('enable_client_portal') === false)
+        if (auth()->user()->client->getSetting('enable_client_portal') === false) {
             return redirect()->to('client/dashboard');
+        }
 
 
         return $next($request);
-
     }
 }

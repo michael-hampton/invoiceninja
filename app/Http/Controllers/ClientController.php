@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -14,6 +14,7 @@ namespace App\Http\Controllers;
 use App\DataMapper\ClientSettings;
 use App\Factory\ClientFactory;
 use App\Filters\ClientFilters;
+use App\Http\Requests\Client\BulkClientRequest;
 use App\Http\Requests\Client\CreateClientRequest;
 use App\Http\Requests\Client\DestroyClientRequest;
 use App\Http\Requests\Client\EditClientRequest;
@@ -23,6 +24,7 @@ use App\Http\Requests\Client\UpdateClientRequest;
 use App\Jobs\Client\StoreClient;
 use App\Jobs\Client\UpdateClient;
 use App\Jobs\Entity\ActionEntity;
+use App\Jobs\Util\ProcessBulk;
 use App\Jobs\Util\UploadAvatar;
 use App\Models\Client;
 use App\Models\ClientContact;
@@ -32,6 +34,7 @@ use App\Models\Size;
 use App\Repositories\BaseRepository;
 use App\Repositories\ClientRepository;
 use App\Transformers\ClientTransformer;
+use App\Utils\Traits\BulkOptions;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Uploadable;
 use Illuminate\Http\Request;
@@ -47,7 +50,8 @@ class ClientController extends BaseController
 {
     use MakesHash;
     use Uploadable;
-    
+    use BulkOptions;
+
     protected $entity_type = Client::class;
 
     protected $entity_transformer = ClientTransformer::class;
@@ -66,7 +70,6 @@ class ClientController extends BaseController
         parent::__construct();
 
         $this->client_repo = $client_repo;
-
     }
 
     /**
@@ -98,7 +101,7 @@ class ClientController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -107,11 +110,9 @@ class ClientController extends BaseController
      */
     public function index(ClientFilters $filters)
     {
-        
         $clients = Client::filter($filters);
-        
-        return $this->listResponse($clients);
 
+        return $this->listResponse($clients);
     }
 
     /**
@@ -125,8 +126,8 @@ class ClientController extends BaseController
      *      path="/api/v1/clients/{id}",
      *      operationId="showClient",
      *      tags={"clients"},
-     *      summary="Shows an company",
-     *      description="Displays an company by id",
+     *      summary="Shows a client",
+     *      description="Displays a client by id",
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
@@ -144,7 +145,7 @@ class ClientController extends BaseController
      *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the company object",
+     *          description="Returns the cl.ient object",
      *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -157,7 +158,7 @@ class ClientController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -166,9 +167,7 @@ class ClientController extends BaseController
      */
     public function show(ShowClientRequest $request, Client $client)
     {
-
-        return $this->itemResponse($client);    
-
+        return $this->itemResponse($client);
     }
 
     /**
@@ -177,13 +176,13 @@ class ClientController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      *
-     * 
+     *
      * @OA\Get(
      *      path="/api/v1/clients/{id}/edit",
      *      operationId="editClient",
      *      tags={"clients"},
-     *      summary="Shows an company for editting",
-     *      description="Displays an company by id",
+     *      summary="Shows a client for editting",
+     *      description="Displays a client by id",
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
@@ -201,7 +200,7 @@ class ClientController extends BaseController
      *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the company object",
+     *          description="Returns the client object",
      *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -214,7 +213,7 @@ class ClientController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -223,9 +222,7 @@ class ClientController extends BaseController
      */
     public function edit(EditClientRequest $request, Client $client)
     {
-
         return $this->itemResponse($client);
-
     }
 
     /**
@@ -235,14 +232,14 @@ class ClientController extends BaseController
      * @param  App\Models\Client $client
      * @return \Illuminate\Http\Response
      *
-     * 
-     * 
+     *
+     *
      * @OA\Put(
      *      path="/api/v1/clients/{id}",
      *      operationId="updateClient",
      *      tags={"clients"},
-     *      summary="Updates an company",
-     *      description="Handles the updating of an company by id",
+     *      summary="Updates a client",
+     *      description="Handles the updating of a client by id",
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
@@ -260,7 +257,7 @@ class ClientController extends BaseController
      *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the company object",
+     *          description="Returns the client object",
      *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -273,7 +270,7 @@ class ClientController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -282,13 +279,14 @@ class ClientController extends BaseController
      */
     public function update(UpdateClientRequest $request, Client $client)
     {
+        if($request->entityIsDeleted($client))
+            return $request->disallowUpdate();
 
         $client = $this->client_repo->save($request->all(), $client);
 
         $this->uploadLogo($request->file('company_logo'), $client->company, $client);
 
         return $this->itemResponse($client->fresh());
-
     }
 
     /**
@@ -296,13 +294,13 @@ class ClientController extends BaseController
      *
      * @return \Illuminate\Http\Response
      *
-     * 
-     * 
+     *
+     *
      * @OA\Get(
      *      path="/api/v1/clients/create",
      *      operationId="getClientsCreate",
      *      tags={"clients"},
-     *      summary="Gets a new blank company object",
+     *      summary="Gets a new blank client object",
      *      description="Returns a blank object with default values",
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
@@ -310,7 +308,7 @@ class ClientController extends BaseController
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Response(
      *          response=200,
-     *          description="A blank company object",
+     *          description="A blank client object",
      *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -323,7 +321,7 @@ class ClientController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -332,11 +330,9 @@ class ClientController extends BaseController
      */
     public function create(CreateClientRequest $request)
     {
-        
         $client = ClientFactory::create(auth()->user()->company()->id, auth()->user()->id);
 
         return $this->itemResponse($client);
-
     }
 
     /**
@@ -352,14 +348,14 @@ class ClientController extends BaseController
      *      operationId="storeClient",
      *      tags={"clients"},
      *      summary="Adds a client",
-     *      description="Adds an client to a copmany",
+     *      description="Adds an client to a company",
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the saved company object",
+     *          description="Returns the saved client object",
      *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -372,7 +368,7 @@ class ClientController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -381,7 +377,6 @@ class ClientController extends BaseController
      */
     public function store(StoreClientRequest $request)
     {
-
         $client = $this->client_repo->save($request->all(), ClientFactory::create(auth()->user()->company()->id, auth()->user()->id));
 
         $client->load('contacts', 'primary_contact');
@@ -389,7 +384,6 @@ class ClientController extends BaseController
         $this->uploadLogo($request->file('company_logo'), $client->company, $client);
 
         return $this->itemResponse($client);
-
     }
 
     /**
@@ -398,13 +392,13 @@ class ClientController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      *
-     * 
+     *
      * @OA\Delete(
      *      path="/api/v1/clients/{id}",
      *      operationId="deleteClient",
      *      tags={"clients"},
-     *      summary="Deletes a company",
-     *      description="Handles the deletion of an company by id",
+     *      summary="Deletes a client",
+     *      description="Handles the deletion of a client by id",
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
@@ -434,7 +428,7 @@ class ClientController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -451,10 +445,11 @@ class ClientController extends BaseController
 
     /**
      * Perform bulk actions on the list view
-     * 
-     * @return Collection
      *
-     * 
+     * @param BulkClientRequest $request
+     * @return \Illuminate\Http\Response
+     *
+     *
      * @OA\Post(
      *      path="/api/v1/clients/bulk",
      *      operationId="bulkClients",
@@ -492,46 +487,37 @@ class ClientController extends BaseController
      *          response=422,
      *          description="Validation error",
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
-
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     *
      */
     public function bulk()
     {
-
         $action = request()->input('action');
         
         $ids = request()->input('ids');
-
         $clients = Client::withTrashed()->find($this->transformKeys($ids));
         
-        $clients->each(function ($client, $key) use($action){
-
-            if(auth()->user()->can('edit', $client))
+        $clients->each(function ($client, $key) use ($action) {
+            if (auth()->user()->can('edit', $client)) {
                 $this->client_repo->{$action}($client);
-
+            }
         });
-
-        return $this->listResponse(Client::withTrashed()->whereIn('id', $this->transformKeys($ids)));
         
+        return $this->listResponse(Client::withTrashed()->whereIn('id', $this->transformKeys($ids)));
     }
 
     /**
      * Returns a client statement
-     * 
+     *
      * @return [type] [description]
      */
     public function statement()
     {
         //todo
     }
-
-
-
 }

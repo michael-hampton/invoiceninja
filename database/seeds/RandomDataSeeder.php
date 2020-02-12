@@ -10,12 +10,14 @@ use App\Helpers\Invoice\InvoiceSum;
 use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Jobs\Company\UpdateCompanyLedgerWithInvoice;
 use App\Jobs\Invoice\UpdateInvoicePayment;
+use App\Listeners\Credit\CreateCreditInvitation;
 use App\Listeners\Invoice\CreateInvoiceInvitation;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\CompanyGateway;
 use App\Models\CompanyToken;
+use App\Models\Credit;
 use App\Models\GatewayType;
 use App\Models\GroupSetting;
 use App\Models\Invoice;
@@ -23,6 +25,7 @@ use App\Models\Payment;
 use App\Models\PaymentType;
 use App\Models\User;
 use App\Models\UserAccount;
+use App\Repositories\CreditRepository;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Cache;
@@ -41,7 +44,7 @@ class RandomDataSeeder extends Seeder
 
         /* Warm up the cache !*/
         $cached_tables = config('ninja.cached_tables');
-        
+
         foreach ($cached_tables as $name => $class) {
             if (! Cache::has($name)) {
                 // check that the table exists in case the migration is pending
@@ -63,7 +66,7 @@ class RandomDataSeeder extends Seeder
                 }
             }
         }
-        
+
 
         $this->command->info('Running RandomDataSeeder');
 
@@ -74,7 +77,6 @@ class RandomDataSeeder extends Seeder
         $account = factory(\App\Models\Account::class)->create();
         $company = factory(\App\Models\Company::class)->create([
             'account_id' => $account->id,
-            'domain' => config('ninja.site_url'),
         ]);
 
         $account->default_company_id = $company->id;
@@ -100,7 +102,7 @@ class RandomDataSeeder extends Seeder
             'is_admin' => 1,
             'is_locked' => 0,
             'permissions' => '',
-            'settings' => json_encode(DefaultSettings::userSettings()),
+            'settings' => DefaultSettings::userSettings(),
         ]);
 
         $client = factory(\App\Models\Client::class)->create([
@@ -117,6 +119,8 @@ class RandomDataSeeder extends Seeder
             'password' => Hash::make(config('ninja.testvars.password')),
             'email_verified_at' => now(),
             'client_id' =>$client->id,
+            'is_primary' => true,
+            'contact_key' => \Illuminate\Support\Str::random(40),
         ]);
 
 
@@ -142,7 +146,7 @@ class RandomDataSeeder extends Seeder
 
         /** Invoice Factory */
         factory(\App\Models\Invoice::class,20)->create(['user_id' => $user->id, 'company_id' => $company->id, 'client_id' => $client->id]);
-      
+
         $invoices = Invoice::cursor();
         $invoice_repo = new InvoiceRepository();
 
@@ -152,42 +156,67 @@ class RandomDataSeeder extends Seeder
 
             if($invoice->uses_inclusive_taxes)
                 $invoice_calc = new InvoiceSumInclusive($invoice);
-            else 
+            else
                 $invoice_calc = new InvoiceSum($invoice);
 
             $invoice = $invoice_calc->build()->getInvoice();
-            
+
             $invoice->save();
 
             event(new CreateInvoiceInvitation($invoice));
-            
-            UpdateCompanyLedgerWithInvoice::dispatchNow($invoice, $invoice->balance);
 
-            $invoice_repo->markSent($invoice);
+            UpdateCompanyLedgerWithInvoice::dispatchNow($invoice, $invoice->balance, $invoice->company);
 
-            event(new InvoiceWasMarkedSent($invoice));
+            $invoice->service()->markSent()->save();
+
+            event(new InvoiceWasMarkedSent($invoice, $company));
 
             if(rand(0, 1)) {
                 $payment = App\Models\Payment::create([
-                    'payment_date' => now(),
-                    'user_id' => $user->id, 
-                    'company_id' => $company->id, 
+                    'date' => now(),
+                    'user_id' => $user->id,
+                    'company_id' => $company->id,
                     'client_id' => $client->id,
                     'amount' => $invoice->balance,
                     'transaction_reference' => rand(0,500),
-                    'payment_type_id' => PaymentType::CREDIT_CARD_OTHER,
+                    'type_id' => PaymentType::CREDIT_CARD_OTHER,
                     'status_id' => Payment::STATUS_COMPLETED,
                 ]);
 
                 $payment->invoices()->save($invoice);
 
-                event(new PaymentWasCreated($payment));
+                event(new PaymentWasCreated($payment, $payment->company));
 
-                UpdateInvoicePayment::dispatchNow($payment);
+                UpdateInvoicePayment::dispatchNow($payment, $payment->company);
             }
-            
+
         });
-        
+
+        /*Credits*/
+        factory(\App\Models\Credit::class,20)->create(['user_id' => $user->id, 'company_id' => $company->id, 'client_id' => $client->id]);
+
+        $credits = Credit::cursor();
+        $credit_repo = new CreditRepository();
+
+        $credits->each(function ($credit) use($credit_repo, $user, $company, $client){
+
+            $credit_calc = null;
+
+            if($credit->uses_inclusive_taxes)
+                $credit_calc = new InvoiceSumInclusive($credit);
+            else
+                $credit_calc = new InvoiceSum($credit);
+
+            $credit = $credit_calc->build()->getInvoice();
+
+            $credit->save();
+
+            event(new CreateCreditInvitation($credit));
+
+            //$invoice->markSent()->save();
+
+        });
+
         /** Recurring Invoice Factory */
         factory(\App\Models\RecurringInvoice::class,10)->create(['user_id' => $user->id, 'company_id' => $company->id, 'client_id' => $client->id]);
 
@@ -211,7 +240,7 @@ class RandomDataSeeder extends Seeder
             'settings' =>  ClientSettings::buildClientSettings(CompanySettings::defaults(), ClientSettings::defaults()),
             'name' => 'Default Client Settings',
         ]);
-        
+
 
         if(config('ninja.testvars.stripe'))
         {

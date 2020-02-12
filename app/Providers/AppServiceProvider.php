@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -54,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
             'proposals' => '\App\Models\Proposal',
         ]);
 
-        Blade::if('env', function($environment){
+        Blade::if('env', function ($environment) {
             return config('ninja.environment') === $environment;
         });
 
@@ -72,7 +72,6 @@ class AppServiceProvider extends ServiceProvider
         Proposal::observe(ProposalObserver::class);
         Quote::observe(QuoteObserver::class);
         Task::observe(TaskObserver::class);
-
     }
 
     /**

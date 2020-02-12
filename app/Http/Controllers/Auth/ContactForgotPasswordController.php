@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -41,13 +41,14 @@ class ContactForgotPasswordController extends Controller
         $this->middleware('guest:contact');
     }
 
-     /**
-     * Show the reset email form.
-     * 
-     * @return \Illuminate\Http\Response
-     */
-    public function showLinkRequestForm(){
-        return view('portal.default.auth.passwords.email',[
+    /**
+    * Show the reset email form.
+    *
+    * @return \Illuminate\Http\Response
+    */
+    public function showLinkRequestForm()
+    {
+        return view('portal.default.auth.passwords.email', [
             'title' => 'Client Password Reset',
             'passwordEmailRoute' => 'client.password.email'
         ]);
@@ -60,6 +61,6 @@ class ContactForgotPasswordController extends Controller
 
     public function broker()
     {
-      return Password::broker('contacts'); 
+        return Password::broker('contacts');
     }
 }

@@ -4,22 +4,20 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Http\Controllers;
 
-use Parsedown;
+use League\CommonMark\CommonMarkConverter;
 
 class TemplateController extends BaseController
 {
-
     public function __construct()
     {
         parent::__construct();
-
     }
 
     /**
@@ -28,7 +26,7 @@ class TemplateController extends BaseController
      * @return \Illuminate\Http\Response
      *
      * @OA\Post(
-     *      path="/api/v1/templates/{entity}/{entity_id}",
+     *      path="/api/v1/templates",
      *      operationId="getShowTemplate",
      *      tags={"templates"},
      *      summary="Returns a entity template with the template variables replaced with the Entities",
@@ -92,7 +90,7 @@ class TemplateController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -100,24 +98,24 @@ class TemplateController extends BaseController
      */
     public function show()
     {
-        
-        if(request()->has('entity') && request()->has('entity_id')){
-
+        if (request()->has('entity') && request()->has('entity_id')) {
             $class = 'App\Models\\'.ucfirst(request()->input('entity'));
             $entity_obj = $class::whereId(request()->input('entity_id'))->company()->first();
-   
         }
 
-        $subject = request()->input('subject');
-        $body = request()->input('body');
+        $subject = request()->input('subject') ?: '';
+        $body = request()->input('body') ?: '';
+
+        $converter = new CommonMarkConverter([
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
 
         $data = [
-            'subject' => Parsedown::instance()->text(request()->input('subject')),
-            'body' => Parsedown::instance()->text(request()->input('body')),
+            'subject' => request()->input('subject'),
+            'body' => $converter->convertToHtml($body),
         ];
 
         return response()->json($data, 200);
-
     }
-
 }

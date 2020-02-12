@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class GatewayType extends StaticModel
 {
-
     public $timestamps = false;
 
     const CREDIT_CARD = 1;
@@ -34,11 +33,8 @@ class GatewayType extends StaticModel
     const CUSTOM3 = 13;
     const TOKEN = 'token';
 
-	public function gateway()
-	{
-		return $this->belongsTo(Gateway::class);
-	}
-
+    public function gateway()
+    {
+        return $this->belongsTo(Gateway::class);
+    }
 }
-
-

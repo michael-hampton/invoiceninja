@@ -4,21 +4,22 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Http\Middleware;
 
+use App\Models\Language;
+use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request as Input;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use Closure;
-
 
 /**
  * Class StartupCheck.
@@ -35,13 +36,14 @@ class StartupCheck
      */
     public function handle(Request $request, Closure $next)
     {
-       // $start = microtime(true);
-       // Log::error('start up check');
+        // $start = microtime(true);
+        // Log::error('start up check');
 
         $cached_tables = config('ninja.cached_tables');
 
-        if (Input::has('clear_cache')) 
+        if (Input::has('clear_cache')) {
             Session::flash('message', 'Cache cleared');
+        }
         
         foreach ($cached_tables as $name => $class) {
             if (Input::has('clear_cache') || ! Cache::has($name)) {
@@ -64,10 +66,7 @@ class StartupCheck
                 }
             }
         }
-
-      //  $end = microtime(true) - $start;
-      //  Log::error("middleware cost = {$end} ms");
-        
+                
         $response = $next($request);
 
         return $response;

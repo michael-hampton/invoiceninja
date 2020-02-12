@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -15,14 +15,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class StaticModel extends Model
 {
-
     protected $casts = [
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
     ];
     
-	protected $dateFormat = 'Y-m-d H:i:s.u';
+    protected $dateFormat = 'Y-m-d H:i:s.u';
 
     public function getIdAttribute()
     {
@@ -38,5 +37,4 @@ class StaticModel extends Model
         
         return $query;
     }
-
 }

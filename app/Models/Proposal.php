@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -18,9 +18,9 @@ class Proposal extends BaseModel
 {
     use MakesHash;
 
-	protected $guarded = [
-		'id',
-	];
+    protected $guarded = [
+        'id',
+    ];
 
     protected $appends = ['proposal_id'];
 
@@ -41,7 +41,6 @@ class Proposal extends BaseModel
 
     public function assigned_user()
     {
-        return $this->belongsTo(User::class ,'assigned_user_id', 'id');
+        return $this->belongsTo(User::class, 'assigned_user_id', 'id');
     }
-    
 }

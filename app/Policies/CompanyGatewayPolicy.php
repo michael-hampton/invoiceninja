@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -20,15 +20,14 @@ use App\Models\User;
  */
 class CompanyGatewayPolicy extends EntityPolicy
 {
-	/**
-	 *  Checks if the user has create permissions
-	 *  
-	 * @param  User $user
-	 * @return bool
-	 */
-	public function create(User $user) : bool
-	{
-		return $user->isAdmin();
-	}
-
+    /**
+     *  Checks if the user has create permissions
+     *
+     * @param  User $user
+     * @return bool
+     */
+    public function create(User $user) : bool
+    {
+        return $user->isAdmin();
+    }
 }

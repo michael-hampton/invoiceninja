@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -16,7 +16,9 @@ use App\DataMapper\CompanySettings;
 use App\DataMapper\DefaultSettings;
 use App\Factory\ClientFactory;
 use App\Factory\CompanyUserFactory;
+use App\Factory\CreditFactory;
 use App\Factory\InvoiceFactory;
+use App\Factory\InvoiceInvitationFactory;
 use App\Factory\InvoiceItemFactory;
 use App\Factory\InvoiceToRecurringInvoiceFactory;
 use App\Helpers\Invoice\InvoiceSum;
@@ -27,6 +29,7 @@ use App\Models\CompanyToken;
 use App\Models\Credit;
 use App\Models\GroupSetting;
 use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
 use App\Models\Quote;
 use App\Models\RecurringInvoice;
 use App\Models\User;
@@ -34,6 +37,7 @@ use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -63,25 +67,25 @@ trait MockAccountData
         $cached_tables = config('ninja.cached_tables');
         
         foreach ($cached_tables as $name => $class) {
-            if (! Cache::has($name)) {
-                // check that the table exists in case the migration is pending
-                if (! Schema::hasTable((new $class())->getTable())) {
-                    continue;
-                }
-                if ($name == 'payment_terms') {
-                    $orderBy = 'num_days';
-                } elseif ($name == 'fonts') {
-                    $orderBy = 'sort_order';
-                } elseif (in_array($name, ['currencies', 'industries', 'languages', 'countries', 'banks'])) {
-                    $orderBy = 'name';
-                } else {
-                    $orderBy = 'id';
-                }
-                $tableData = $class::orderBy($orderBy)->get();
-                if ($tableData->count()) {
-                    Cache::forever($name, $tableData);
-                }
+            
+            // check that the table exists in case the migration is pending
+            if (! Schema::hasTable((new $class())->getTable())) {
+                continue;
             }
+            if ($name == 'payment_terms') {
+                $orderBy = 'num_days';
+            } elseif ($name == 'fonts') {
+                $orderBy = 'sort_order';
+            } elseif (in_array($name, ['currencies', 'industries', 'languages', 'countries', 'banks'])) {
+                $orderBy = 'name';
+            } else {
+                $orderBy = 'id';
+            }
+            $tableData = $class::orderBy($orderBy)->get();
+            if ($tableData->count()) {
+                Cache::forever($name, $tableData);
+            }
+            
         }
 
 
@@ -89,7 +93,6 @@ trait MockAccountData
         $this->account = factory(\App\Models\Account::class)->create();
         $this->company = factory(\App\Models\Company::class)->create([
             'account_id' => $this->account->id,
-            'domain' => 'ninja.test:8000',
         ]);
 
         $this->account->default_company_id = $this->company->id;
@@ -99,7 +102,7 @@ trait MockAccountData
 
         if(!$this->user){
             $this->user = factory(\App\Models\User::class)->create([
-            //    'account_id' => $account->id,
+                'password' => Hash::make('ALongAndBriliantPassword'),
                 'confirmation_code' => $this->createDbHash(config('database.default'))
             ]);
         }
@@ -128,13 +131,33 @@ trait MockAccountData
         //     'settings' => json_encode(DefaultSettings::userSettings()),
         // ]);
 
-        $this->client = ClientFactory::create($this->company->id, $this->user->id);
-        $this->client->save();
+         $this->client = ClientFactory::create($this->company->id, $this->user->id);
+         $this->client->save();
 
+            factory(\App\Models\ClientContact::class,1)->create([
+                'user_id' => $this->user->id,
+                'client_id' => $this->client->id,
+                'company_id' => $this->company->id,
+                'is_primary' => 1,
+                'send_invoice' => true,
+            ]);
+
+            factory(\App\Models\ClientContact::class,1)->create([
+                'user_id' => $this->user->id,
+                'client_id' => $this->client->id,
+                'company_id' => $this->company->id,
+                'send_invoice' => true
+            ]);
+
+        
         $gs = new GroupSetting;
         $gs->name = 'Test';
         $gs->company_id = $this->client->company_id;
         $gs->settings = ClientSettings::buildClientSettings($this->company->settings, $this->client->settings);
+
+        $gs_settings = $gs->settings;
+        $gs_settings->website = 'http://staging.invoicing.co';
+        $gs->settings = $gs_settings;
         $gs->save();
 
         $this->client->group_settings_id = $gs->id;
@@ -144,7 +167,7 @@ trait MockAccountData
         $this->invoice->client_id = $this->client->id;
 
 		$this->invoice->line_items = $this->buildLineItems();
-		$this->invoice->uses_inclusive_Taxes = false;
+		$this->invoice->uses_inclusive_taxes = false;
 
         $this->invoice->save();
 
@@ -155,7 +178,41 @@ trait MockAccountData
 
         $this->invoice->save();
 
-        UpdateCompanyLedgerWithInvoice::dispatchNow($this->invoice, $this->invoice->amount);
+        $this->invoice->service()->markSent();
+
+        $this->credit = CreditFactory::create($this->company->id,$this->user->id);
+        $this->credit->client_id = $this->client->id;
+
+		$this->credit->line_items = $this->buildLineItems();
+        $this->credit->amount = 10;
+        $this->credit->balance = 10;
+
+		$this->credit->uses_inclusive_taxes = false;
+
+        $this->credit->save();
+        
+        $contacts = $this->invoice->client->contacts;
+
+        $contacts->each(function ($contact) {
+
+            $invitation = InvoiceInvitation::whereCompanyId($this->invoice->company_id)
+                                        ->whereClientContactId($contact->id)
+                                        ->whereInvoiceId($this->invoice->id)
+                                        ->first();
+
+            if(!$invitation && $contact->send_invoice) {
+                $ii = InvoiceInvitationFactory::create($this->invoice->company_id, $this->invoice->user_id);
+                $ii->invoice_id = $this->invoice->id;
+                $ii->client_contact_id = $contact->id;
+                $ii->save();
+            }
+            else if($invitation && !$contact->send_invoice) {
+                $invitation->delete();
+            }
+
+        });
+
+        UpdateCompanyLedgerWithInvoice::dispatchNow($this->invoice, $this->invoice->amount, $this->invoice->company);
 
         $recurring_invoice = InvoiceToRecurringInvoiceFactory::create($this->invoice);
         $recurring_invoice->next_send_date = Carbon::now();

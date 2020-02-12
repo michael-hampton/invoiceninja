@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -35,11 +35,9 @@ class CreateCompany
 
     public function __construct(array $request, $account)
     {
-
         $this->request = $request;
 
         $this->account = $account;
-        
     }
 
     /**
@@ -59,7 +57,7 @@ class CreateCompany
         $company->ip = request()->ip();
         $company->settings = $settings;
         $company->db = config('database.default');
-        $company->domain = isset($this->request['domain']) ? $this->request['domain'] : config('ninja.site_url');
+        $company->subdomain = isset($this->request['subdomain']) ? $this->request['subdomain'] : '';
         $company->save();
 
 

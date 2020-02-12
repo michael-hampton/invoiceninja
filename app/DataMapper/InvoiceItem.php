@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -13,7 +13,6 @@ namespace App\DataMapper;
 
 class InvoiceItem
 {
-
     public $quantity = 0;
 
     public $cost = 0;
@@ -52,10 +51,10 @@ class InvoiceItem
 
     public $custom_value4 = '';
 
-    public $invoice_item_type_id = 1;
+    public $line_item_type_id = 1; //1 = product, 2 = service, 3 unpaid gateway fee, 4 paid gateway fee
 
     public static $casts = [
-        'invoice_item_type_id' => 'string',
+        'line_item_type_id' => 'string',
         'quantity' => 'float',
         'cost' => 'float',
         'product_key' => 'string',

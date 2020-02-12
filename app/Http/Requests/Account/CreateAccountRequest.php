@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -35,8 +35,6 @@ class CreateAccountRequest extends Request
      */
     public function rules()
     {
-        $this->sanitize();
-
         return [
             //'email' => 'required|string|email|max:100',
             'first_name'        => 'required|string|max:100',
@@ -49,15 +47,12 @@ class CreateAccountRequest extends Request
         ];
     }
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
         $input['user_agent'] = request()->server('HTTP_USER_AGENT');
 
         $this->replace($input);
-
-        return $this->all();
     }
-
 }

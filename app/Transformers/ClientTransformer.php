@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -111,8 +111,8 @@ class ClientTransformer extends EntityTransformer
             'is_deleted' => (bool) $client->is_deleted,
             'vat_number' => $client->vat_number ?: '',
             'id_number' => $client->id_number ?: '',
-            'updated_at' => $client->updated_at,
-            'deleted_at' => $client->deleted_at,
+            'updated_at' => (int)$client->updated_at,
+            'archived_at' => (int)$client->deleted_at,
             'display_name' => $client->present()->name()
         ];
     }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -18,8 +18,8 @@ use Laracasts\Presenter\PresentableTrait;
 
 class Backup extends BaseModel
 {
-	public function activity()
-	{
-		return $this->belongsTo(Activity::class);
-	}
+    public function activity()
+    {
+        return $this->belongsTo(Activity::class);
+    }
 }

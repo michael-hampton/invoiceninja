@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -24,10 +24,6 @@ class CreateCompanyGatewayRequest extends Request
 
     public function authorize() : bool
     {
-
         return auth()->user()->isAdmin();
-
     }
-
-
 }

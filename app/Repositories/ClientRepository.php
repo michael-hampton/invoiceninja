@@ -4,13 +4,14 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Repositories;
 
+use App\Factory\ClientFactory;
 use App\Models\Client;
 use App\Repositories\ClientContactRepository;
 use App\Utils\Traits\GeneratesCounter;
@@ -33,9 +34,7 @@ class ClientRepository extends BaseRepository
      */
     public function __construct(ClientContactRepository $contact_repo)
     {
-
         $this->contact_repo = $contact_repo;
-
     }
 
     /**
@@ -45,12 +44,10 @@ class ClientRepository extends BaseRepository
      */
     public function getClassName()
     {
-
         return Client::class;
-
     }
 
-	/**
+    /**
      * Saves the client and its contacts
      *
      * @param      array                           $data    The data
@@ -59,27 +56,41 @@ class ClientRepository extends BaseRepository
      * @return     Client|\App\Models\Client|null  Client Object
      */
     public function save(array $data, Client $client) : ?Client
-	{
+    {
+
         $client->fill($data);
 
         $client->save();
 
-        if($client->id_number == "" || !$client->id_number)
-            $client->id_number = $this->getNextClientNumber($client); //todo write tests for this and make sure that custom client numbers also works as expected from here
+        if ($client->id_number == "" || !$client->id_number) {
+            $client->id_number = $this->getNextClientNumber($client);
+        } //todo write tests for this and make sure that custom client numbers also works as expected from here
 
         $client->save();
 
-        if(isset($data['contacts']))
+        if (isset($data['contacts'])) {
             $contacts = $this->contact_repo->save($data['contacts'], $client);
+        }
 
-
-        if(empty($data['name']))
+        if (empty($data['name'])) {
             $data['name'] = $client->present()->name();
+        }
 
 
         return $client;
-        
-	}
+    }
 
-
+    /**
+     * Store clients in bulk.
+     *
+     * @param array $client
+     * @return Client|null
+     */
+    public function create($client): ?Client
+    {
+        return $this->save(
+            $client,
+            ClientFactory::create(auth()->user()->company()->id, auth()->user()->id)
+        );
+    }
 }

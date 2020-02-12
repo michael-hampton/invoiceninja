@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -31,20 +31,17 @@ trait VerifiesUserEmail
     {
         //$user = User::where('confirmation_code', $code)->first();
         
-        if ($user = User::whereRaw("BINARY `confirmation_code`= ?",$code)->first()) {
-
+        if ($user = User::whereRaw("BINARY `confirmation_code`= ?", $code)->first()) {
             $user->email_verified_at = now();
             $user->confirmation_code = null;
             $user->save();
 
             return response()->json(['message' => ctrans('texts.security_confirmation')]);
             //return redirect()->route('dashboard.index')->with('message', ctrans('texts.security_confirmation'));
-
         }
 
         return response()->json(['message' => ctrans('texts.wrong_confirmation')]);
 
         //return redirect()->route('login')->with('message', ctrans('texts.wrong_confirmation'));
-
     }
 }

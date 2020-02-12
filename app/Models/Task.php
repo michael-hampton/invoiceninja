@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -13,32 +13,27 @@ namespace App\Models;
 
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends BaseModel
 {
     use MakesHash;
+    use SoftDeletes;
     
     protected $fillable = [
-		'client_id',
+        'client_id',
         'invoice_id',
         'custom_value1',
         'custom_value2',
         'description',
         'is_running',
         'time_log',
-	];
+    ];
 
-    protected $appends = ['task_id'];
-
-    public function getRouteKeyName()
-    {
-        return 'task_id';
-    }
-
-    public function getTaskIdAttribute()
-    {
-        return $this->encodePrimaryKey($this->id);
-    }
+    protected $casts = [
+        'updated_at' => 'timestamp',
+        'created_at' => 'timestamp',
+    ];
 
     public function documents()
     {
@@ -47,7 +42,7 @@ class Task extends BaseModel
 
     public function assigned_user()
     {
-        return $this->belongsTo(User::class ,'assigned_user_id', 'id')->withTrashed();
+        return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
     public function user()
@@ -59,6 +54,4 @@ class Task extends BaseModel
     {
         return $this->belongsTo(Client::class);
     }
-
-    
 }

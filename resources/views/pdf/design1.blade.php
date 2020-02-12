@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>$invoice_number</title>
+    <title>$number</title>
     <link href="{{asset('/vendors/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{asset('/vendors/css/coreui.min.css') }}" rel="stylesheet">
     <style>
@@ -58,13 +58,13 @@
         <div class="row mt-4">
 
                 <div class="col-md-4">
-                    <img src="$company_logo" style="width:100%; max-width:150px;">
+                    <img src="$company.logo" style="width:100%; max-width:150px;">
                 </div>
 
                 <div class="col-md-4 ml-auto">
-                $invoice_number_label:  $invoice_number <br>
-                $invoice_date_label:  $invoice_date <br>
-                $invoice_due_date_label:  $due_date 
+                $invoice_number_label:  $number <br>
+                $date_label:  $date <br>
+                $due_date_label:  $due_date 
                 </div>
         </div>
 
@@ -80,8 +80,8 @@
             </div>
 
             <div class="col-md-4 ml-auto">
-                $company_name<br>
-                $company_address<br>
+                $company.name<br>
+                $company.address<br>
                 $phone<br>
                 $email<br>
             </div>

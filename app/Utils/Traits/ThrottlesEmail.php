@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -21,20 +21,17 @@ use Illuminate\Support\Facades\Mail;
  */
 trait ThrottlesEmail
 {
-
-
-	public function getDailyEmailLimit(Company $company)
-	{
-		$limit = config('ninja.daily_email_limit');
+    public function getDailyEmailLimit(Company $company)
+    {
+        $limit = config('ninja.daily_email_limit');
 
         $limit += $company->created_at->diffInMonths() * 100;
 
         return min($limit, 5000);
-	}
+    }
 
-	public function isThrottled(Company $company)
+    public function isThrottled(Company $company)
     {
-
         $key = $company->company_key;
 
         // http://stackoverflow.com/questions/1375501/how-do-i-throttle-my-sites-api-users

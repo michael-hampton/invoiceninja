@@ -4,13 +4,12 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Http\Controllers;
-
 
 use App\Models\Activity;
 use App\Transformers\ActivityTransformer;
@@ -18,7 +17,6 @@ use Illuminate\Http\Request;
 
 class ActivityController extends BaseController
 {
-
     protected $entity_type = Activity::class;
 
     protected $entity_transformer = ActivityTransformer::class;
@@ -66,7 +64,7 @@ class ActivityController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -75,14 +73,12 @@ class ActivityController extends BaseController
      */
     public function index(Request $request)
     {
+        $default_activities = $request->has('rows') ? $request->input('rows') : 50;
 
-        $default_activities = isset($request->input('rows')) ? $request->input('rows') : 50;
         $activities = Activity::orderBy('created_at', 'DESC')->company()
                                 ->take($default_activities);
 
 
         return $this->listResponse($activities);
-
     }
-
 }

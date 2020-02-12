@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -23,6 +23,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 
+//todo - ensure we are MultiDB Aware in dispatched jobs
+
 class MarkOpened implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, NumberFormatter;
@@ -38,17 +40,15 @@ class MarkOpened implements ShouldQueue
      */
     public function __construct(string $message_id, string $entity)
     {
-
         $this->message_id = $message_id;
 
         $this->entity = $entity;
-
     }
 
     /**
      * Execute the job.
      *
-     * 
+     *
      * @return void
      */
     public function handle()
@@ -63,6 +63,5 @@ class MarkOpened implements ShouldQueue
 
         $invitation->email_error = $error;
         $invitation->save();
-
     }
 }

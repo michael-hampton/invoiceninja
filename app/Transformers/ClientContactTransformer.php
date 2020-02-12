@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -29,14 +29,13 @@ class ClientContactTransformer extends EntityTransformer
      */
     public function transform(ClientContact $contact)
     {
-
         return [
             'id' => $this->encodePrimaryKey($contact->id),
             'first_name' => $contact->first_name ?: '',
             'last_name' => $contact->last_name ?: '',
             'email' => $contact->email ?: '',
-            'updated_at' => $contact->updated_at,
-            'archived_at' => $contact->deleted_at,
+            'updated_at' => (int)$contact->updated_at,
+            'archived_at' => (int)$contact->deleted_at,
             'is_primary' => (bool) $contact->is_primary,
             'is_locked' => (bool) $contact->is_locked,
             'phone' => $contact->phone ?: '',
@@ -44,7 +43,7 @@ class ClientContactTransformer extends EntityTransformer
             'custom_value2' => $contact->custom_value2 ?: '',
             'custom_value3' => $contact->custom_value3 ?: '',
             'custom_value4' => $contact->custom_value4 ?: '',
-            'contact_key' => $contact->contact_key,
+            'contact_key' => $contact->contact_key ?: '',
             'send_invoice' => (bool) $contact->send_invoice,
         ];
     }

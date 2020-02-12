@@ -3,8 +3,8 @@
 namespace Feature;
 
 
-use App\Factory\UserFactory;
 use App\Factory\CompanyUserFactory;
+use App\Factory\UserFactory;
 use App\Models\Account;
 use App\Models\Activity;
 use App\Models\Company;
@@ -18,6 +18,7 @@ use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
@@ -35,6 +36,10 @@ class UserTest extends TestCase
     {
         parent::setUp();
 
+        $this->withoutMiddleware(
+            ThrottleRequests::class
+        );
+
         Session::start();
 
         $this->faker = \Faker\Factory::create();
@@ -42,6 +47,10 @@ class UserTest extends TestCase
         Model::reguard();
 
         $this->makeTestData();
+
+        $this->withoutMiddleware(
+            ThrottleRequests::class
+        );
     }
 
     public function testUserList()
@@ -51,7 +60,8 @@ class UserTest extends TestCase
         $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
-            ])->get('/api/v1/users');
+                'X-API-PASSWORD' => 'ALongAndBriliantPassword',
+        ])->get('/api/v1/users');
 
         $response->assertStatus(200);
 
@@ -73,7 +83,8 @@ class UserTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/users?include=company_user', $data);
+                    'X-API-PASSWORD' => 'ALongAndBriliantPassword',
+        ])->post('/api/v1/users?include=company_user', $data);
 
         $response->assertStatus(200);
 
@@ -92,7 +103,8 @@ class UserTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/users/'.$this->encodePrimaryKey($user->id).'/attach_to_company?include=company_user');
+                    'X-API-PASSWORD' => 'ALongAndBriliantPassword',
+        ])->post('/api/v1/users/'.$this->encodePrimaryKey($user->id).'/attach_to_company?include=company_user');
 
         $response->assertStatus(200);
 
@@ -103,7 +115,8 @@ class UserTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
-            ])->delete('/api/v1/users/'.$this->encodePrimaryKey($user->id).'/detach_from_company?include=company_user');
+                    'X-API-PASSWORD' => 'ALongAndBriliantPassword',
+        ])->delete('/api/v1/users/'.$this->encodePrimaryKey($user->id).'/detach_from_company?include=company_user');
 
         $response->assertStatus(200);
 
@@ -123,7 +136,6 @@ class UserTest extends TestCase
         /* Create New Company */
         $company2 = factory(\App\Models\Company::class)->create([
             'account_id' => $this->account->id,
-            'domain' => 'ninja.test:8000',
         ]);
 
         /* Create New Company Token*/
@@ -209,6 +221,7 @@ class UserTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $user_1_company_token->token,
+                'X-API-PASSWORD' => 'ALongAndBriliantPassword',
             ])->put('/api/v1/users/'.$this->encodePrimaryKey($user->id).'?include=company_user', $data);
 
         $response->assertStatus(200);

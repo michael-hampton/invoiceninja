@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -25,21 +25,17 @@ class ApiSecretCheck
      */
     public function handle($request, Closure $next)
     {
-
-        if( $request->header('X-API-SECRET') && ($request->header('X-API-SECRET') == config('ninja.api_secret')) )
+        if ($request->header('X-API-SECRET') && ($request->header('X-API-SECRET') == config('ninja.api_secret'))) {
             return $next($request);
-        else {
-
+        } else {
             $error = [
                 'message' => 'Invalid secret',
                 'errors' => []
             ];
             return response()
-            ->json(json_encode($error, JSON_PRETTY_PRINT) ,403)
+            ->json($error, 403)
             ->header('X-App-Version', config('ninja.app_version'))
             ->header('X-Api-Version', config('ninja.api_version'));
         }
-
-        
     }
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -26,7 +26,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Laracasts\Presenter\PresentableTrait;
-
 
 class ClientContact extends Authenticatable implements HasLocalePreference
 {
@@ -52,8 +51,8 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     ];
 
     protected $with = [
-        'client',
-        'company'
+//        'client',
+//        'company'
     ];
 
     protected $casts = [
@@ -63,7 +62,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     ];
 
     protected $hidden = [
-        'password', 
+        'password',
         'remember_token',
         'user_id',
         'company_id',
@@ -84,6 +83,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         'custom_value3',
         'custom_value4',
         'email',
+        'is_primary',
     ];
     
     public function getHashedIdAttribute()
@@ -104,12 +104,11 @@ class ClientContact extends Authenticatable implements HasLocalePreference
 
     public function setAvatarAttribute($value)
     {
-
-        if(!filter_var($value, FILTER_VALIDATE_URL) && $value)
+        if (!filter_var($value, FILTER_VALIDATE_URL) && $value) {
             $this->attributes['avatar'] = url('/') . $value;
-        else
+        } else {
             $this->attributes['avatar'] = $value;
-    
+        }
     }
 
     public function client()
@@ -141,7 +140,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     {
         $languages = Cache::get('languages');
         
-        return $languages->filter(function($item) {
+        return $languages->filter(function ($item) {
             return $item->id == $this->client->getSetting('language_id');
         })->first()->locale;
 

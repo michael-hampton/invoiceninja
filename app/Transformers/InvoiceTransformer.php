@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -37,48 +37,48 @@ class InvoiceTransformer extends EntityTransformer
 
         return $this->includeCollection($invoice->invitations, $transformer, InvoiceInvitation::class);
     }
-/*
-    public function includeInvoiceItems(Invoice $invoice)
-    {
-        $transformer = new InvoiceItemTransformer($this->serializer);
-
-        return $this->includeCollection($invoice->invoice_items, $transformer, ENTITY_INVOICE_ITEM);
-    }
-
-
-
-    public function includePayments(Invoice $invoice)
-    {
-        $transformer = new PaymentTransformer($this->account, $this->serializer, $invoice);
-
-        return $this->includeCollection($invoice->payments, $transformer, ENTITY_PAYMENT);
-    }
-
-    public function includeClient(Invoice $invoice)
-    {
-        $transformer = new ClientTransformer($this->account, $this->serializer);
-
-        return $this->includeItem($invoice->client, $transformer, ENTITY_CLIENT);
-    }
-
-    public function includeExpenses(Invoice $invoice)
-    {
-        $transformer = new ExpenseTransformer($this->account, $this->serializer);
-
-        return $this->includeCollection($invoice->expenses, $transformer, ENTITY_EXPENSE);
-    }
-
-    public function includeDocuments(Invoice $invoice)
-    {
-        $transformer = new DocumentTransformer($this->account, $this->serializer);
-
-        $invoice->documents->each(function ($document) use ($invoice) {
-            $document->setRelation('invoice', $invoice);
-        });
-
-        return $this->includeCollection($invoice->documents, $transformer, ENTITY_DOCUMENT);
-    }
-*/
+    /*
+        public function includeInvoiceItems(Invoice $invoice)
+        {
+            $transformer = new InvoiceItemTransformer($this->serializer);
+    
+            return $this->includeCollection($invoice->invoice_items, $transformer, ENTITY_INVOICE_ITEM);
+        }
+    
+    
+    
+        public function includePayments(Invoice $invoice)
+        {
+            $transformer = new PaymentTransformer($this->account, $this->serializer, $invoice);
+    
+            return $this->includeCollection($invoice->payments, $transformer, ENTITY_PAYMENT);
+        }
+    
+        public function includeClient(Invoice $invoice)
+        {
+            $transformer = new ClientTransformer($this->account, $this->serializer);
+    
+            return $this->includeItem($invoice->client, $transformer, ENTITY_CLIENT);
+        }
+    
+        public function includeExpenses(Invoice $invoice)
+        {
+            $transformer = new ExpenseTransformer($this->account, $this->serializer);
+    
+            return $this->includeCollection($invoice->expenses, $transformer, ENTITY_EXPENSE);
+        }
+    
+        public function includeDocuments(Invoice $invoice)
+        {
+            $transformer = new DocumentTransformer($this->account, $this->serializer);
+    
+            $invoice->documents->each(function ($document) use ($invoice) {
+                $document->setRelation('invoice', $invoice);
+            });
+    
+            return $this->includeCollection($invoice->documents, $transformer, ENTITY_DOCUMENT);
+        }
+    */
     public function transform(Invoice $invoice)
     {
         return [
@@ -90,19 +90,20 @@ class InvoiceTransformer extends EntityTransformer
             'client_id' => (string) $this->encodePrimaryKey($invoice->client_id),
             'status_id' => (string) ($invoice->status_id ?: 1),
             'design_id' => (string) ($invoice->design_id ?: 1),
-            'updated_at' => $invoice->updated_at,
-            'archived_at' => $invoice->deleted_at,
+            'updated_at' => (int)$invoice->updated_at,
+            'archived_at' => (int)$invoice->deleted_at,
             'number' => $invoice->number ?: '',
             'discount' => (float) $invoice->discount,
             'po_number' => $invoice->po_number ?: '',
             'date' => $invoice->date ?: '',
+            'last_sent_date' => $invoice->last_sent_date ?: '',
+            'next_send_date' => $invoice->date ?: '',
             'due_date' => $invoice->due_date ?: '',
             'terms' => $invoice->terms ?: '',
             'public_notes' => $invoice->public_notes ?: '',
             'private_notes' => $invoice->private_notes ?: '',
             'is_deleted' => (bool) $invoice->is_deleted,
             'uses_inclusive_taxes' => (bool) $invoice->uses_inclusive_taxes,
-            'invoice_type_id' => (string) $invoice->invoice_type_id ?: '',
             'tax_name1' => $invoice->tax_name1 ? $invoice->tax_name1 : '',
             'tax_rate1' => (float) $invoice->tax_rate1,
             'tax_name2' => $invoice->tax_name2 ? $invoice->tax_name2 : '',
@@ -127,8 +128,6 @@ class InvoiceTransformer extends EntityTransformer
             'custom_surcharge_taxes' => (bool) $invoice->custom_surcharge_taxes,
             'line_items' => $invoice->line_items ?: (array)[],
             'backup' => $invoice->backup ?: '',
-            'settings' => $invoice->settings ?: '',
-
         ];
     }
 }

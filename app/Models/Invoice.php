@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -17,19 +17,22 @@ use App\Events\Invoice\InvoiceWasUpdated;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Jobs\Client\UpdateClientBalance;
+use App\Jobs\Company\UpdateCompanyLedgerWithInvoice;
 use App\Jobs\Invoice\CreateInvoicePdf;
 use App\Models\Currency;
 use App\Models\Filterable;
 use App\Models\PaymentTerm;
+use App\Services\Invoice\InvoiceService;
 use App\Utils\Number;
+use App\Utils\Traits\InvoiceEmailBuilder;
 use App\Utils\Traits\MakesDates;
 use App\Utils\Traits\MakesInvoiceValues;
+use App\Utils\Traits\MakesReminders;
 use App\Utils\Traits\NumberFormatter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Laracasts\Presenter\PresentableTrait;
 
@@ -41,7 +44,9 @@ class Invoice extends BaseModel
     use MakesDates;
     use PresentableTrait;
     use MakesInvoiceValues;
-    
+    use InvoiceEmailBuilder;
+    use MakesReminders;
+
     protected $presenter = 'App\Models\Presenters\InvoicePresenter';
 
     protected $hidden = [
@@ -90,8 +95,8 @@ class Invoice extends BaseModel
     ];
 
     protected $with = [
-        'company',
-        'client',
+        // 'company',
+        // 'client',
     ];
 
     protected $appends = [
@@ -109,23 +114,6 @@ class Invoice extends BaseModel
     const STATUS_UNPAID = -2;
     const STATUS_REVERSED = -3;
 
-    
-    public function getStatusAttribute()
-    {
-
-        if($this->status_id == Invoice::STATUS_SENT && $this->due_date > Carbon::now())
-            return Invoice::STATUS_UNPAID;
-        else if($this->status_id == Invoice::STATUS_PARTIAL && $this->partial_due_date > Carbon::now())
-            return Invoice::STATUS_UNPAID;
-        else if($this->status_id == Invoice::STATUS_SENT && $this->due_date < Carbon::now())
-            return Invoice::STATUS_OVERDUE;
-        else if($this->status_id == Invoice::STATUS_PARTIAL && $this->partial_due_date < Carbon::now())
-            return Invoice::STATUS_OVERDUE;
-        else
-            return $this->status_id;
-
-    }
-    
     public function company()
     {
         return $this->belongsTo(Company::class);
@@ -138,9 +126,9 @@ class Invoice extends BaseModel
 
     public function assigned_user()
     {
-        return $this->belongsTo(User::class ,'assigned_user_id', 'id')->withTrashed();
+        return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
-    
+
     public function invitations()
     {
         return $this->hasMany(InvoiceInvitation::class);
@@ -158,7 +146,7 @@ class Invoice extends BaseModel
 
     public function payments()
     {
-        return $this->morphToMany(Payment::class, 'paymentable');
+        return $this->morphToMany(Payment::class, 'paymentable')->withPivot('amount','refunded')->withTimestamps();;
     }
 
     public function company_ledger()
@@ -166,14 +154,42 @@ class Invoice extends BaseModel
         return $this->morphMany(CompanyLedger::class, 'company_ledgerable');
     }
 
+    public function credits()
+    {
+        return $this->belongsToMany(Credit::class)->using(Paymentable::class)->withPivot('amount','refunded')->withTimestamps();;
+    }
+
+    /**
+     * Service entry points
+     */
+    public function service() :InvoiceService
+    {
+        return new InvoiceService($this);
+    }
+
     /* ---------------- */
     /* Settings getters */
     /* ---------------- */
 
+    public function getStatusAttribute()
+    {
+        if ($this->status_id == Invoice::STATUS_SENT && $this->due_date > Carbon::now()) {
+            return Invoice::STATUS_UNPAID;
+        } elseif ($this->status_id == Invoice::STATUS_PARTIAL && $this->partial_due_date > Carbon::now()) {
+            return Invoice::STATUS_UNPAID;
+        } elseif ($this->status_id == Invoice::STATUS_SENT && $this->due_date < Carbon::now()) {
+            return Invoice::STATUS_OVERDUE;
+        } elseif ($this->status_id == Invoice::STATUS_PARTIAL && $this->partial_due_date < Carbon::now()) {
+            return Invoice::STATUS_OVERDUE;
+        } else {
+            return $this->status_id;
+        }
+    }
+
     /**
-     * If True, prevents an invoice from being 
+     * If True, prevents an invoice from being
      * modified once it has been marked as sent
-     * 
+     *
      * @return boolean isLocked
      */
     public function isLocked() : bool
@@ -181,43 +197,48 @@ class Invoice extends BaseModel
         return $this->client->getSetting('lock_sent_invoices');
     }
 
-    /**
-     * Determines if invoice overdue.
-     *
-     * @param      float    $balance   The balance
-     * @param      date.    $due_date  The due date
-     *
-     * @return     boolean  True if overdue, False otherwise.
-     */
-    public static function isOverdue($balance, $due_date)
-    {
-        if (! $this->formatValue($balance,2) > 0 || ! $due_date) {
-            return false;
-        }
-
-        // it isn't considered overdue until the end of the day
-        return strtotime($this->createClientDate(date(), $this->client->timezone()->name)) > (strtotime($due_date) + (60 * 60 * 24));
-    }
-
-    public function markViewed() :void
-    {
-        $this->last_viewed = Carbon::now()->format('Y-m-d H:i');
-        $this->save();
-    }
-    
     public function isPayable() : bool
     {
-
-        if($this->status_id == Invoice::STATUS_SENT && $this->due_date > Carbon::now())
+        if ($this->status_id == Invoice::STATUS_SENT && $this->is_deleted == false) {
             return true;
-        else if($this->status_id == Invoice::STATUS_PARTIAL && $this->partial_due_date > Carbon::now())
+        } elseif ($this->status_id == Invoice::STATUS_PARTIAL && $this->is_deleted == false) {
             return true;
-        else if($this->status_id == Invoice::STATUS_SENT && $this->due_date < Carbon::now())
+        } elseif ($this->status_id == Invoice::STATUS_SENT && $this->is_deleted == false) {
             return true;
-        else if($this->status_id == Invoice::STATUS_PARTIAL && $this->partial_due_date < Carbon::now())
+        } elseif ($this->status_id == Invoice::STATUS_DRAFT && $this->is_deleted == false) {
             return true;
-        else
+        } else {
             return false;
+        }
+    }
+
+    public function isRefundable() : bool
+    {
+
+        if($this->is_deleted)
+            return false;
+
+        if(($this->amount - $this->balance) == 0)
+            return false;
+
+        return true;
+        
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPartial() : bool
+    {
+        return $this->status_id >= self::STATUS_PARTIAL;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasPartial() : bool
+    {
+        return ($this->partial && $this->partial > 0) === true;
     }
 
     public static function badgeForStatus(int $status)
@@ -243,46 +264,79 @@ class Invoice extends BaseModel
                 break;
             case Invoice::STATUS_UNPAID:
                 return '<h5><span class="badge badge-warning">'.ctrans('texts.unpaid').'</span></h5>';
-                break;      
+                break;
             case Invoice::STATUS_REVERSED:
                 return '<h5><span class="badge badge-info">'.ctrans('texts.reversed').'</span></h5>';
-                break;           
+                break;
             default:
                 # code...
                 break;
         }
     }
 
+    public static function stringStatus(int $status)
+    {
+        switch ($status) {
+            case Invoice::STATUS_DRAFT:
+                return ctrans('texts.draft');
+                break;
+            case Invoice::STATUS_SENT:
+                return ctrans('texts.sent');
+                break;
+            case Invoice::STATUS_PARTIAL:
+                return ctrans('texts.partial');
+                break;
+            case Invoice::STATUS_PAID:
+                return ctrans('texts.paid');
+                break;
+            case Invoice::STATUS_CANCELLED:
+                return ctrans('texts.cancelled');
+                break;
+            case Invoice::STATUS_OVERDUE:
+                return ctrans('texts.overdue');
+                break;
+            case Invoice::STATUS_UNPAID:
+                return ctrans('texts.unpaid');
+                break;
+            case Invoice::STATUS_REVERSED:
+                return ctrans('texts.reversed');
+                break;
+            default:
+                # code...
+                break;
+        }
+    }
     /**
      * Returns the template for the invoice
-     * 
+     *
      * @return string Either the template view, OR the template HTML string
      * @todo  this needs attention, invoice->settings needs clarification
      */
     public function design() :string
     {
-        if($this->client->getSetting('design'))
+        if ($this->client->getSetting('design')) {
             return File::exists(resource_path($this->client->getSetting('design'))) ? File::get(resource_path($this->client->getSetting('design'))) : File::get(resource_path('views/pdf/design1.blade.php'));
-        else
+        } else {
             return File::get(resource_path('views/pdf/design1.blade.php'));
+        }
     }
 
     /**
      * Access the invoice calculator object
-     * 
+     *
      * @return object The invoice calculator object getters
      */
     public function calc()
     {
         $invoice_calc = null;
 
-        if($this->uses_inclusive_taxes)
+        if ($this->uses_inclusive_taxes) {
             $invoice_calc = new InvoiceSumInclusive($this);
-        else
+        } else {
             $invoice_calc = new InvoiceSum($this);
-        
-        return $invoice_calc->build();
+        }
 
+        return $invoice_calc->build();
     }
 
     /** TODO// DOCUMENT THIS FUNCTIONALITY */
@@ -292,8 +346,9 @@ class Invoice extends BaseModel
 
         $storage_path = 'public/' . $this->client->client_hash . '/invoices/'. $this->number . '.pdf';
 
-        if(!Storage::exists($storage_path)) {
-            event(new InvoiceWasUpdated($this));
+        if (!Storage::exists($storage_path)) {
+            event(new InvoiceWasUpdated($this, $this->company));
+            CreateInvoicePdf::dispatch($this, $this->company, $this->client->primary_contact()->first());
         }
 
         return $public_path;
@@ -303,129 +358,73 @@ class Invoice extends BaseModel
     {
         $storage_path = 'storage/' . $this->client->client_hash . '/invoices/'. $this->number . '.pdf';
 
-        if(!Storage::exists($storage_path)) {
-            CreateInvoicePdf::dispatchNow($this);
+        if (!Storage::exists($storage_path)) {
+            CreateInvoicePdf::dispatchNow($this, $this->company, $this->client->primary_contact()->first());
         }
 
-        return $storage_path;        
+        return $storage_path;
     }
 
-    /**
-     * @param bool $save
-     */
-    public function updatePaidStatus($paid = false, $save = true) : bool
-    {
-        $status_id = false;
-        if ($paid && $this->balance == 0) {
-            $status_id = self::STATUS_PAID;
-        } elseif ($paid && $this->balance > 0 && $this->balance < $this->amount) {
-            $status_id = self::STATUS_PARTIAL;
-        } elseif ($this->hasPartial() && $this->balance > 0) {
-            $status_id = ($this->balance == $this->amount ? self::STATUS_SENT : self::STATUS_PARTIAL);
-        }
-
-        if ($status_id && $status_id != $this->status_id) {
-            $this->status_id = $status_id;
-            if ($save) {
-                $this->save();
-            }
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasPartial() : bool
-    {
-        return ($this->partial && $this->partial > 0) === true;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPartial() : bool
-    {
-        return $this->status_id >= self::STATUS_PARTIAL;
-    }
-
-    /**
-     * Clear partial fields
-     * @return void 
-     */
-    public function clearPartial() : void
-    {
-        $this->partial = null;
-        $this->partial_due_date = null;
-        $this->save();
-    }
-
-    /**
-     * @param float $balance_adjustment
-     */
-    public function updateBalance($balance_adjustment)
-    {
-
-        if ($this->is_deleted) 
-            return;
-        
-        $balance_adjustment = floatval($balance_adjustment);
-        
-        $this->balance = $this->balance + $balance_adjustment;
-
-        if($this->balance == 0) {
-            $this->status_id = self::STATUS_PAID;
-            $this->save();
-            event(new InvoiceWasPaid($this));
-
-            return;
-        }
-
-        $this->save();
-    }
-
-    public function setDueDate()
-    {
-        $this->due_date = Carbon::now()->addDays($this->client->getSetting('payment_terms'));
-        $this->save();
-    }
-
-    public function setStatus($status)
-    {
-        $this->status_id = $status;
-        $this->save();
-    }
-
-    public function markSent()
-    {
-        /* Return immediately if status is not draft */
-        if($this->status_id != Invoice::STATUS_DRAFT)
-            return $this;
-
-        $this->status_id = Invoice::STATUS_SENT;
-
-        $this->markInvitationsSent();
-
-        event(new InvoiceWasMarkedSent($this));
-
-        UpdateClientBalance::dispatchNow($this->client, $this->balance);
-        
-        $this->save();
-    }
 
     /**
      * Updates Invites to SENT
      *
      */
-    private function markInvitationsSent()
+    public function markInvitationsSent()
     {
-        $this->invitations->each(function($invitation) {
-
-            if(!isset($invitation->sent_date))
-            {
+        $this->invitations->each(function ($invitation) {
+            if (!isset($invitation->sent_date)) {
                 $invitation->sent_date = Carbon::now();
                 $invitation->save();
             }
-
         });
     }
+
+
+/* Graveyard */
+
+//    /**
+//     * Determines if invoice overdue.
+//     *
+//     * @param      float    $balance   The balance
+//     * @param      date.    $due_date  The due date
+//     *
+//     * @return     boolean  True if overdue, False otherwise.
+//     */
+//    public static function isOverdue($balance, $due_date)
+//    {
+//        if (! $this->formatValue($balance,2) > 0 || ! $due_date) {
+//            return false;
+//        }
+//
+//        // it isn't considered overdue until the end of the day
+//        return strtotime($this->createClientDate(date(), $this->client->timezone()->name)) > (strtotime($due_date) + (60 * 60 * 24));
+//    }
+
+
+    /**
+     * @param bool $save
+     *
+     * Has this been dragged from V1?
+     */
+    // public function updatePaidStatus($paid = false, $save = true) : bool
+    // {
+    //     $status_id = false;
+    //     if ($paid && $this->balance == 0) {
+    //         $status_id = self::STATUS_PAID;
+    //     } elseif ($paid && $this->balance > 0 && $this->balance < $this->amount) {
+    //         $status_id = self::STATUS_PARTIAL;
+    //     } elseif ($this->hasPartial() && $this->balance > 0) {
+    //         $status_id = ($this->balance == $this->amount ? self::STATUS_SENT : self::STATUS_PARTIAL);
+    //     }
+
+    //     if ($status_id && $status_id != $this->status_id) {
+    //         $this->status_id = $status_id;
+    //         if ($save) {
+    //             $this->save();
+    //         }
+    //     }
+    // }
+
+
 }

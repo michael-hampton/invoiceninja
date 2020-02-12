@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -27,7 +27,6 @@ class DocumentController extends Controller
      */
     public function index()
     {
-
     }
 
     /**
@@ -68,7 +67,7 @@ class DocumentController extends Controller
           '_token' => '7KoEVRjB2Fq8XBVFRUFbhQFjKm4rY9h0AGSlpdj3',
           'is_avatar' => '1',
           'q' => '/client/document',
-          'file' => 
+          'file' =>
           Illuminate\Http\UploadedFile::__set_state(array(
              'test' => false,
              'originalName' => 'family.jpg',
@@ -76,7 +75,7 @@ class DocumentController extends Controller
              'error' => 0,
              'hashName' => NULL,
           )),
-        )  
+        )
          */
     }
 

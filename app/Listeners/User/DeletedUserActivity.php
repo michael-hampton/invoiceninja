@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -37,13 +37,13 @@ class DeletedUserActivity
      */
     public function handle($event)
     {
-
         $fields = new \stdClass;
 
-        if(auth()->user()->id)
+        if (auth()->user()->id) {
             $fields->user_id = auth()->user()->id;
-        else
+        } else {
             $fields->user_id = $event->user->id;
+        }
         
         $fields->company_id = $event->user->company_id;
         $fields->activity_type_id = Activity::DELETE_USER;

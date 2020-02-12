@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -29,26 +29,22 @@ class StoreProductRequest extends Request
 
     public function rules()
     {
-        $this->sanitize();
-
         return [
-            'product_key' => 'required|unique:products,product_key,null,null,company_id,'.auth()->user()->companyId(),
+            //'product_key' => 'required|unique:products,product_key,null,null,company_id,'.auth()->user()->companyId(),
             'cost' => 'numeric',
             'price' => 'numeric',
             'quantity' => 'numeric',
         ];
     }
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
-        if(!isset($input['quantity']) || $input['quantity'] < 1)
+        if (!isset($input['quantity']) || $input['quantity'] < 1) {
             $input['quantity'] = 1;
+        }
 
         $this->replace($input);
-
-        return $this->all();
     }
-    
 }

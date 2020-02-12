@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -15,10 +15,8 @@ use App\Models\GroupSetting;
 
 class GroupSettingFactory
 {
-
-	public static function create(int $company_id, int $user_id) :GroupSetting
-	{
-
+    public static function create(int $company_id, int $user_id) :GroupSetting
+    {
         $gs = new GroupSetting;
         $gs->name = '';
         $gs->company_id = $company_id;
@@ -26,6 +24,5 @@ class GroupSettingFactory
         $gs->settings = '{}';
         
         return $gs;
-        
     }
 }

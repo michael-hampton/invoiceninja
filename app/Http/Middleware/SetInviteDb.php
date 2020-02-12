@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -26,24 +26,21 @@ class SetInviteDb
     
     public function handle($request, Closure $next)
     {
-
-            $error = [
+        $error = [
                 'message' => 'Invalid URL',
                 'errors' => []
             ];
-        /* 
+        /*
          * Use the host name to set the active DB
          **/
-        if( $request->getSchemeAndHttpHost() && config('ninja.db.multi_db_enabled') && ! MultiDB::findAndSetDbByInvitation($request->route('entity'),$request->route('invitation_key'))) 
-        {
-            if(request()->json)
-                return response()->json(json_encode($error, JSON_PRETTY_PRINT) ,403);
-            else
+        if ($request->getSchemeAndHttpHost() && config('ninja.db.multi_db_enabled') && ! MultiDB::findAndSetDbByInvitation($request->route('entity'), $request->route('invitation_key'))) {
+            if (request()->json) {
+                return response()->json($error, 403);
+            } else {
                 abort(404);
+            }
         }
 
         return $next($request);
     }
-
-
 }

@@ -65,7 +65,7 @@ class ClientTest extends TestCase
         $acc = $response->json();
 
 
-        $account = Account::find($this->decodePrimaryKey($acc['data'][0]['account']['id']));        
+        $account = Account::find($this->decodePrimaryKey($acc['data'][0]['account']['id']));
 
         $token = $account->default_company->tokens->first()->token;
 
@@ -102,13 +102,13 @@ class ClientTest extends TestCase
 
         $acc = $response->json();
 
-        $account = Account::find($this->decodePrimaryKey($acc['data'][0]['account']['id']));                
+        $account = Account::find($this->decodePrimaryKey($acc['data'][0]['account']['id']));
 
         $company_token = $account->default_company->tokens()->first();
 
         $token = $company_token->token;
         $company = $company_token->company;
-        
+
         $user = $company_token->user;
 
         //$company_user = $company->company_users()->first();
@@ -182,6 +182,19 @@ class ClientTest extends TestCase
 
         $response->assertStatus(200);
 
+        $client->is_deleted = true;
+        $client->save();
+
+
+        $client_update = [
+            'name' => 'Double Funk'
+        ];
+
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $token,
+            ])->put('/api/v1/clients/'.$this->encodePrimaryKey($client->id), $client_update)
+            ->assertStatus(400);
 
         }
 
@@ -191,7 +204,6 @@ class ClientTest extends TestCase
         $account = factory(\App\Models\Account::class)->create();
                 $company = factory(\App\Models\Company::class)->create([
                     'account_id' => $account->id,
-                    'domain' => 'ninja.test',
                      ]);
 
         $account->default_company_id = $company->id;
@@ -245,13 +257,60 @@ class ClientTest extends TestCase
             $this->assertNotNull($client);
 
             /* Make sure we have a valid settings object*/
-            $this->assertEquals($client->getSetting('timezone_id'), 15);            
+            $this->assertEquals($client->getSetting('timezone_id'), 1);
 
             /* Make sure we are harvesting valid data */
-            $this->assertEquals($client->timezone()->name, 'US/Eastern');
+            $this->assertEquals($client->timezone()->name, 'Pacific/Midway');
 
             /* Make sure NULL settings return the correct count (0) instead of throwing an exception*/
             $this->assertEquals($client->contacts->count(), 3);
         }
 
+    /** @test */
+    // public function testMassivelyCreatingClients()
+    // {
+    //     $data = [
+    //         'first_name' => $this->faker->firstName,
+    //         'last_name' => $this->faker->lastName,
+    //         'name' => $this->faker->company,
+    //         'email' => $this->faker->unique()->safeEmail,
+    //         'password' => 'ALongAndBrilliantPassword123',
+    //         '_token' => csrf_token(),
+    //         'privacy_policy' => 1,
+    //         'terms_of_service' => 1
+    //     ];
+
+    //     $response = $this->withHeaders([
+    //         'X-API-SECRET' => config('ninja.api_secret'),
+    //     ])->post('/api/v1/signup?include=account', $data);
+
+    //     $response->assertStatus(200);
+
+    //     $acc = $response->json();
+
+    //     $account = Account::find($this->decodePrimaryKey($acc['data'][0]['account']['id']));
+
+    //     $token = $account->default_company->tokens->first()->token;
+
+    //     $body = [
+    //         'action' => 'create',
+    //         'clients' => [
+    //             ['name' => $this->faker->firstName, 'website' => 'my-awesome-website-1.com'],
+    //             ['name' => $this->faker->firstName, 'website' => 'my-awesome-website-2.com'],
+    //         ],
+    //     ];
+
+    //     $response = $this->withHeaders([
+    //         'X-API-SECRET' => config('ninja.api_secret'),
+    //         'X-API-TOKEN' => $token,
+    //     ])->post(route('clients.bulk'), $body);
+
+    //     $response->assertStatus(200);
+
+    //     $first_record = Client::where('website', 'my-awesome-website-1.com')->first();
+    //     $second_record = Client::where('website', 'my-awesome-website-2.com')->first();
+
+    //     $this->assertNotNull($first_record);
+    //     $this->assertNotNull($second_record);
+    // }
 }

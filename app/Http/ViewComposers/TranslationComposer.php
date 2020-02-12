@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -19,7 +19,6 @@ use Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-
 class TranslationComposer
 {
     /**
@@ -31,7 +30,6 @@ class TranslationComposer
      */
     public function compose(View $view) :void
     {
-        
         $view->with('industries', TranslationHelper::getIndustries());
 
         $view->with('countries', TranslationHelper::getCountries());
@@ -43,7 +41,5 @@ class TranslationComposer
         $view->with('currencies', TranslationHelper::getCurrencies());
 
         $view->with('payment_terms', TranslationHelper::getPaymentTerms());
-
     }
-
 }

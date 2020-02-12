@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -17,21 +17,24 @@ use App\Utils\Traits\MakesHash;
 
 class CompanyFactory
 {
-	use MakesHash;
+    use MakesHash;
 
-	public static function create(int $account_id) :Company
-	{
-
+    /**
+     * @param int $account_id
+     * @return Company
+     */
+    public function create(int $account_id) :Company
+    {
         $company = new Company;
-//        $company->name = '';
+        // $company->name = '';
         $company->account_id = $account_id;
         $company->company_key = $this->createHash();
         $company->settings = CompanySettings::defaults();
         $company->db = config('database.default');
-        $company->custom_fields = (object) ['custom1' => '1', 'custom2' => '2', 'custom3'=>'3'];
-        $company->domain = '';
-        
+        //$company->custom_fields = (object) ['invoice1' => '1', 'invoice2' => '2', 'client1'=>'3'];
+        $company->custom_fields = (object) [];
+        $company->subdomain = '';
+
         return $company;
-        
     }
 }

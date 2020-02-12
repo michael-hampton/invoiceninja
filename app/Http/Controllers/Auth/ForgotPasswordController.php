@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -44,7 +44,7 @@ class ForgotPasswordController extends Controller
     /**
      * Password Reset
      *
-     * 
+     *
      * @OA\Post(
      *      path="/api/v1/reset_password",
      *      operationId="reset_password",
@@ -93,7 +93,7 @@ class ForgotPasswordController extends Controller
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -115,5 +115,4 @@ class ForgotPasswordController extends Controller
             ? response()->json(['message' => 'Reset link sent to your email.', 'status' => true], 201)
             : response()->json(['message' => 'Email not found', 'status' => false], 401);
     }
-
 }

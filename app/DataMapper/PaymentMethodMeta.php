@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -13,13 +13,13 @@ namespace App\DataMapper;
 
 class PaymentMethodMeta
 {
-	public $exp_month;
+    public $exp_month;
 
-	public $exp_year;
+    public $exp_year;
 
-	public $brand;
+    public $brand;
 
-	public $last4;
+    public $last4;
 
-	public $type;
+    public $type;
 }

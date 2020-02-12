@@ -4,35 +4,62 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Models;
 
+use App\Models\Filterable;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends BaseModel
 {
-    use MakesHash;
+    use SoftDeletes;
+    use Filterable;
 
-    protected $guarded = [
-    	'id',
+    protected $fillable = [
+        'client_id',
+        'vendor_id',
+        'expense_currency_id',
+        'expense_date',
+        'invoice_currency_id',
+        'amount',
+        'foreign_amount',
+        'exchange_rate',
+        'private_notes',
+        'public_notes',
+        'bank_id',
+        'transaction_id',
+        'expense_category_id',
+        'tax_rate1',
+        'tax_name1',
+        'tax_rate2',
+        'tax_name2',
+        'tax_rate3',
+        'tax_name3',
+        'payment_date',
+        'payment_type_id',
+        'transaction_reference',
+        'invoice_documents',
+        'should_be_invoiced',
+        'custom_value1',
+        'custom_value2',
+        'custom_value3',
+        'custom_value4',
     ];
 
-    protected $appends = ['expense_id'];
 
-    public function getRouteKeyName()
-    {
-        return 'expense_id';
-    }
+    protected $casts = [
+        'is_deleted' => 'boolean',
+        'updated_at' => 'timestamp',
+        'created_at' => 'timestamp',
+        'deleted_at' => 'timestamp',
+    ];
 
-    public function getExpenseIdAttribute()
-    {
-        return $this->encodePrimaryKey($this->id);
-    }
 
     public function documents()
     {
@@ -41,6 +68,6 @@ class Expense extends BaseModel
 
     public function assigned_user()
     {
-        return $this->belongsTo(User::class ,'assigned_user_id', 'id');
+        return $this->belongsTo(User::class, 'assigned_user_id', 'id');
     }
 }

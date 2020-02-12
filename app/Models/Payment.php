@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -12,11 +12,14 @@
 namespace App\Models;
 
 use App\Models\BaseModel;
+use App\Models\Credit;
 use App\Models\DateFormat;
 use App\Models\Filterable;
+use App\Models\Paymentable;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\Payment\Refundable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -26,7 +29,8 @@ class Payment extends BaseModel
     use Filterable;
     use MakesDates;
     use SoftDeletes;
-    
+    use Refundable;
+
     const STATUS_PENDING = 1;
     const STATUS_VOIDED = 2;
     const STATUS_FAILED = 3;
@@ -50,12 +54,14 @@ class Payment extends BaseModel
     const TYPE_TOKEN = 'token';
 
     protected $fillable = [
-		'client_id',
-        'payment_type_id',
+        'client_id',
+        'type_id',
         'amount',
-        'payment_date',
-        'transaction_reference'
-	];
+        'date',
+        'transaction_reference',
+        'number',
+        'is_manual'
+    ];
 
     protected $casts = [
         'settings' => 'object',
@@ -63,6 +69,10 @@ class Payment extends BaseModel
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
         'is_deleted' => 'bool',
+    ];
+
+    protected $with = [
+        'paymentables',
     ];
 
     public function client()
@@ -82,7 +92,7 @@ class Payment extends BaseModel
 
     public function assigned_user()
     {
-        return $this->belongsTo(User::class ,'assigned_user_id', 'id')->withTrashed();
+        return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
     
     public function documents()
@@ -92,7 +102,12 @@ class Payment extends BaseModel
 
     public function invoices()
     {
-        return $this->morphedByMany(Invoice::class, 'paymentable')->withPivot('amount');
+        return $this->morphedByMany(Invoice::class, 'paymentable')->withPivot('amount','refunded')->withTimestamps();
+    }
+
+    public function credits()
+    {
+        return $this->morphedByMany(Credit::class, 'paymentable')->withPivot('amount','refunded')->withTimestamps();
     }
 
     public function company_ledger()
@@ -102,7 +117,12 @@ class Payment extends BaseModel
 
     public function type()
     {
-        return $this->hasOne(PaymentType::class,'id','payment_type_id');
+        return $this->belongsTo(PaymentType::class);
+    }
+
+    public function paymentables()
+    {
+        return $this->hasMany(Paymentable::class);
     }
 
     public function formattedAmount()
@@ -112,12 +132,13 @@ class Payment extends BaseModel
 
     public function clientPaymentDate()
     {
-        if(!$this->payment_date)
+        if (!$this->date) {
             return '';
+        }
 
         $date_format = DateFormat::find($this->client->getSetting('date_format_id'));
 
-        return $this->createClientDate($this->payment_date, $this->client->timezone()->name)->format($date_format->format);
+        return $this->createClientDate($this->date, $this->client->timezone()->name)->format($date_format->format);
     }
 
     public static function badgeForStatus(int $status)
@@ -140,7 +161,7 @@ class Payment extends BaseModel
                 break;
             case self::STATUS_REFUNDED:
                 return '<h6><span class="badge badge-primary">'.ctrans('texts.payment_status_6').'</span></h6>';
-                break;         
+                break;
             default:
                 # code...
                 break;
@@ -153,4 +174,12 @@ class Payment extends BaseModel
             ->withTrashed()
             ->where('id', $this->decodePrimaryKey($value))->firstOrFail();
     }
+
+    public function refund(array $data) :Payment
+    {
+
+        return $this->processRefund($data);
+
+    }
+    
 }

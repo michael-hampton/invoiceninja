@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -31,14 +31,11 @@ class StoreClientRequest extends Request
 
     public function authorize() : bool
     {
-
         return auth()->user()->can('create', Client::class);
-
     }
 
     public function rules()
     {
-        $this->sanitize();
 
         /* Ensure we have a client name, and that all emails are unique*/
         //$rules['name'] = 'required|min:1';
@@ -48,35 +45,30 @@ class StoreClientRequest extends Request
 
         $contacts = request('contacts');
 
-        if(is_array($contacts))
-        {
-
+        if (is_array($contacts)) {
             for ($i = 0; $i < count($contacts); $i++) {
 
                 //$rules['contacts.' . $i . '.email'] = 'nullable|email|distinct';
             }
-
         }
 
         return $rules;
-            
     }
 
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
-        if(!isset($input['settings']))
+        if (!isset($input['settings'])) {
             $input['settings'] = ClientSettings::defaults();
+        }
         
-        if(isset($input['group_settings_id']))
+        if (isset($input['group_settings_id'])) {
             $input['group_settings_id'] = $this->decodePrimaryKey($input['group_settings_id']);
+        }
 
-        $this->replace($input);   
-
-        return $this->all();
-
+        $this->replace($input);
     }
 
     public function messages()
@@ -87,6 +79,4 @@ class StoreClientRequest extends Request
             'contacts.*.email.required' => ctrans('validation.email', ['attribute' => 'email']),
         ];
     }
-
-
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -53,8 +53,12 @@ class CompanyGatewayTransformer extends EntityTransformer
             'update_details' => (bool)$company_gateway->update_details,
             'config' => (string) $company_gateway->getConfigTransformed(),
             'fees_and_limits' => $company_gateway->fees_and_limits ?: '',
-            'updated_at' => $company_gateway->updated_at,
-            'deleted_at' => $company_gateway->deleted_at,
+            'updated_at' => (int)$company_gateway->updated_at,
+            'archived_at' => (int)$company_gateway->deleted_at,
+            'custom_value1' => $company_gateway->custom_value1 ?: '',
+            'custom_value2' => $company_gateway->custom_value2 ?: '',
+            'custom_value3' => $company_gateway->custom_value3 ?: '',
+            'custom_value4' => $company_gateway->custom_value4 ?: '',
         ];
     }
 
@@ -64,5 +68,4 @@ class CompanyGatewayTransformer extends EntityTransformer
 
         return $this->includeItem($company_gateway->gateway, $transformer, Gateway::class);
     }
-
 }

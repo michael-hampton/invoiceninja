@@ -4,13 +4,14 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Listeners\Invoice;
 
+use App\Libraries\MultiDB;
 use App\Models\Activity;
 use App\Repositories\ActivityRepository;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,6 +38,7 @@ class CreateInvoiceHtmlBackup implements ShouldQueue
      */
     public function handle($event)
     {
+        MultiDB::setDB($event->company->db);
 
         $fields = new \stdClass;
 

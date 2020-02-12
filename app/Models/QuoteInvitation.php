@@ -4,20 +4,32 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Models;
 
+use App\Models\Quote;
+use App\Utils\Traits\Inviteable;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Database\Eloquent\Model;
 
 class QuoteInvitation extends BaseModel
 {
+    use MakesDates;
+    use Inviteable;
 
-	use MakesDates;
+    protected $fillable = [
+        'id',
+        'client_contact_id',
+    ];
+
+    public function entityType()
+    {
+        return Quote::class;
+    }
 
     /**
      * @return mixed
@@ -59,5 +71,4 @@ class QuoteInvitation extends BaseModel
 
         return sprintf('<img src="data:image/svg+xml;base64,%s"></img><p/>%s: %s', $this->signature_base64, ctrans('texts.signed'), $this->createClientDate($this->signature_date, $this->contact->client->timezone()->name));
     }
-
 }

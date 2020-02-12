@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -47,7 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $presenter = 'App\Models\Presenters\UserPresenter';
 
-    protected $with = ['companies'];
+    protected $with = []; // ? companies also
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
@@ -73,6 +73,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'oauth_user_id',
         'oauth_provider_id',
         'oauth_user_token',
+        'custom_value1',
+        'custom_value2',
+        'custom_value3',
+        'custom_value4',
     ];
 
     /**
@@ -90,7 +94,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'settings' => 'object',
-        'permissions' => 'object',
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
@@ -102,10 +105,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->encodePrimaryKey($this->id);
     }
 
-
     /**
      * Returns a account.
-     * 
+     *
      * @return Collection
      */
     public function account()
@@ -115,7 +117,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns all company tokens.
-     * 
+     *
      * @return Collection
      */
     public function tokens()
@@ -125,17 +127,17 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns all companies a user has access to.
-     * 
+     *
      * @return Collection
      */
     public function companies()
     {
-        return $this->belongsToMany(Company::class)->using(CompanyUser::class)->withPivot('permissions', 'settings', 'is_admin', 'is_owner', 'is_locked');
+        return $this->belongsToMany(Company::class)->using(CompanyUser::class)->withPivot('permissions', 'settings', 'is_admin', 'is_owner', 'is_locked')->withTimestamps();
     }
 
     /**
     *
-    * As we are authenticating on CompanyToken, 
+    * As we are authenticating on CompanyToken,
     * we need to link the company to the user manually. This allows
     * us to decouple a $user and their attached companies.
     *
@@ -155,9 +157,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns the current company
-     * 
+     *
      * @return Collection
-     */ 
+     */
     public function company()
     {
         return $this->getCompany();
@@ -165,10 +167,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     private function setCompanyByGuard()
     {
-        
-        if(Auth::guard('contact')->check())
+        if (Auth::guard('contact')->check()) {
             $this->setCompany(auth()->user()->client->company);
-
+        }
     }
 
     public function company_users()
@@ -178,145 +179,105 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function company_user()
     {
-        if(!$this->id)
+        if (!$this->id) {
             $this->id = auth()->user()->id;
+        }
 
-        return $this->hasOneThrough(CompanyUser::class, CompanyToken::class, 'user_id', 'company_id','id','company_id')->where('company_user.user_id', $this->id);
+        return $this->hasOneThrough(CompanyUser::class, CompanyToken::class, 'user_id', 'company_id', 'id', 'company_id')->where('company_user.user_id', $this->id);
     }
 
     /**
      * Returns the currently set company id for the user
-     * 
+     *
      * @return int
      */
     public function companyId() :int
     {
-
         return $this->company()->id;
-        
+    }
+
+    public function clients()
+    {
+        return $this->hasMany(Client::class);
     }
 
     /**
-     * Returns a object of user permissions
-     * 
-     * @return stdClass
+     * Returns a comma separated list of user permissions
+     *
+     * @return comma separated list
      */
     public function permissions()
     {
-        
-        $permissions = json_decode($this->company_user->permissions);
-        
-        if (! $permissions) 
-            return [];
-
-        return $permissions;
+        return $this->company_user->permissions;
     }
 
     /**
      * Returns a object of User Settings
-     * 
+     *
      * @return stdClass
      */
     public function settings()
     {
-
         return json_decode($this->company_user->settings);
-
     }
 
     /**
      * Returns a boolean of the administrator status of the user
-     * 
+     *
      * @return bool
      */
     public function isAdmin() : bool
     {
-
         return $this->company_user->is_admin;
+    }
 
+    public function isOwner() : bool
+    {
+        return $this->company_user->is_owner;
     }
 
     /**
      * Returns all user created contacts
-     * 
+     *
      * @return Collection
      */
     public function contacts()
     {
-
         return $this->hasMany(ClientContact::class);
-
     }
 
     /**
      * Returns a boolean value if the user owns the current Entity
-     * 
+     *
      * @param  string Entity
      * @return bool
      */
     public function owns($entity) : bool
     {
-
         return ! empty($entity->user_id) && $entity->user_id == $this->id;
-
     }
 
     /**
      * Returns a boolean value if the user is assigned to the current Entity
-     * 
+     *
      * @param  string Entity
      * @return bool
      */
     public function assigned($entity) : bool
     {
-
         return ! empty($entity->assigned_user_id) && $entity->assigned_user_id == $this->id;
-
     }
 
-    /**
-     * Flattens a stdClass representation of the User Permissions
-     * into a Collection
-     * 
-     * @return Collection
-     */
-    public function permissionsFlat() :Collection
-    {
-
-        return collect($this->permissions())->flatten();
-
-    }
 
     /**
      * Returns true if permissions exist in the map
-     * 
+     *
      * @param  string permission
      * @return boolean
      */
     public function hasPermission($permission) : bool
-    { 
-
-
-        return (stripos($this->company_user->permissions, $permission) !== false);
-            
-
-       // return $this->permissionsFlat()->contains($permission);
-
-    }
-
-    /**
-     * Returns a array of permission for the mobile application
-     * 
-     * @return array
-     */
-    public function permissionsMap() : array
     {
-        
-        $keys = array_values((array) $this->permissions());
-        $values = array_fill(0, count($keys), true);
-
-        return array_combine($keys, $values);
-
+        return (stripos($this->company_user->permissions, $permission) !== false);
     }
 
     public function documents()
@@ -326,12 +287,11 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getEmailVerifiedAt()
     {
-
-        if($this->email_verified_at)
+        if ($this->email_verified_at) {
             return Carbon::parse($this->email_verified_at)->timestamp;
-        else
+        } else {
             return null;
-
+        }
     }
 
     public function routeNotificationForSlack($notification)
@@ -360,4 +320,3 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('id', $this->decodePrimaryKey($value))->firstOrFail();
     }
 }
-

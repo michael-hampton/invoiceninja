@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -35,11 +35,9 @@ class UpdateContactLastLogin implements ShouldQueue
      */
     public function handle($event)
     {
+        $client_contact = $event->client_contact;
 
-       $client_contact = $event->client_contact;
-
-       $client_contact->last_login = now();
-       $client_contact->save();
-       
+        $client_contact->last_login = now();
+        $client_contact->save();
     }
 }

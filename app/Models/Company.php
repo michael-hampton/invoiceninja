@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -17,6 +17,7 @@ use App\Models\Client;
 use App\Models\CompanyGateway;
 use App\Models\CompanyUser;
 use App\Models\Country;
+use App\Models\Credit;
 use App\Models\Currency;
 use App\Models\Expense;
 use App\Models\GroupSetting;
@@ -50,7 +51,7 @@ class Company extends BaseModel
     protected $fillable = [
         'fill_products',
         'industry_id',
-        'domain',
+        'subdomain',
         'size_id',
         'custom_fields',
         'enable_product_cost',
@@ -66,6 +67,7 @@ class Company extends BaseModel
         'custom_surcharge_taxes2',
         'custom_surcharge_taxes3',
         'custom_surcharge_taxes4',
+        'show_product_details',
 
     ];
 
@@ -112,6 +114,30 @@ class Company extends BaseModel
         return $this->hasMany(Client::class)->withTrashed();
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class)->withTrashed();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function projects()
+    {
+        return $this->hasMany(Project::class)->withTrashed();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function vendors()
+    {
+        return $this->hasMany(Vendor::class)->withTrashed();
+    }
+
     public function activities()
     {
         return $this->hasMany(Activity::class);
@@ -136,6 +162,23 @@ class Company extends BaseModel
     public function invoices()
     {
         return $this->hasMany(Invoice::class)->withTrashed();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function quotes()
+    {
+        return $this->hasMany(Quote::class)->withTrashed();
+    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function credits()
+    {
+        return $this->hasMany(Credit::class)->withTrashed();
     }
 
     /**
@@ -177,7 +220,7 @@ class Company extends BaseModel
     }
 
     /**
-     * 
+     *
      */
     public function timezone()
     {
@@ -231,7 +274,7 @@ class Company extends BaseModel
      */
     public function expenses()
     {
-        return $this->hasMany(Expense::class, 'account_id', 'id')->withTrashed();
+        return $this->hasMany(Expense::class)->withTrashed();
     }
 
     /**
@@ -239,7 +282,7 @@ class Company extends BaseModel
      */
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'account_id', 'id')->withTrashed();
+        return $this->hasMany(Payment::class)->withTrashed();
     }
 
     public function tokens()
@@ -249,12 +292,12 @@ class Company extends BaseModel
 
     public function company_users()
     {
-        return $this->hasMany(CompanyUser::class);
+        return $this->hasMany(CompanyUser::class)->withTimestamps();
     }
 
     public function owner()
     {
-        $c = $this->company_users->where('is_owner',true)->first();
+        $c = $this->company_users->where('is_owner', true)->first();
 
         return User::find($c->user_id);
     }
@@ -265,5 +308,8 @@ class Company extends BaseModel
             ->where('id', $this->decodePrimaryKey($value))->firstOrFail();
     }
 
-
+    public function domain()
+    {
+        return 'https://' . $this->subdomain . config('ninja.app_domain');
+    }
 }

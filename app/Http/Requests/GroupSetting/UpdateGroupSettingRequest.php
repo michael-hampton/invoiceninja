@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -31,24 +31,15 @@ class UpdateGroupSettingRequest extends Request
 
     public function rules()
     {
-        $this->sanitize();
-
         $rules['settings'] = new ValidClientGroupSettingsRule();
         
         return $rules;
-
     }
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
-        $this->replace($input);   
-
-        return $this->all();
-
+        $this->replace($input);
     }
-
-
-
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -29,7 +29,6 @@ class ClientGatewayTokenTransformer extends EntityTransformer
      */
     public function transform(ClientGatewayToken $cgt)
     {
-
         return [
             'id' => $this->encodePrimaryKey($cgt->id),
             'token' => (string)$cgt->token ?: '',
@@ -37,8 +36,8 @@ class ClientGatewayTokenTransformer extends EntityTransformer
             'gateway_type_id' => (string)$cgt->gateway_type_id ?: '',
             'company_gateway_id' => (string)$this->encodePrimaryKey($cgt->company_gateway_id) ?: '',
             'is_default' => (bool) $cgt->is_default,
-            'updated_at' => $cgt->updated_at,
-            'archived_at' => $cgt->deleted_at,
+            'updated_at' => (int)$cgt->updated_at,
+            'archived_at' => (int)$cgt->deleted_at,
         ];
     }
 }

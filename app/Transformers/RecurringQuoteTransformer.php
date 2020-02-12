@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -30,53 +30,53 @@ class RecurringQuoteTransformer extends EntityTransformer
     //    'documents',
     ];
 
-/*
-    public function includeInvoiceItems(Invoice $quote)
-    {
-        $transformer = new InvoiceItemTransformer($this->serializer);
-
-        return $this->includeCollection($quote->invoice_items, $transformer, ENTITY_INVOICE_ITEM);
-    }
-
-    public function includeInvitations(Invoice $quote)
-    {
-        $transformer = new InvitationTransformer($this->account, $this->serializer);
-
-        return $this->includeCollection($quote->invitations, $transformer, ENTITY_INVITATION);
-    }
-
-    public function includePayments(Invoice $quote)
-    {
-        $transformer = new PaymentTransformer($this->account, $this->serializer, $quote);
-
-        return $this->includeCollection($quote->payments, $transformer, ENTITY_PAYMENT);
-    }
-
-    public function includeClient(Invoice $quote)
-    {
-        $transformer = new ClientTransformer($this->account, $this->serializer);
-
-        return $this->includeItem($quote->client, $transformer, ENTITY_CLIENT);
-    }
-
-    public function includeExpenses(Invoice $quote)
-    {
-        $transformer = new ExpenseTransformer($this->account, $this->serializer);
-
-        return $this->includeCollection($quote->expenses, $transformer, ENTITY_EXPENSE);
-    }
-
-    public function includeDocuments(Invoice $quote)
-    {
-        $transformer = new DocumentTransformer($this->account, $this->serializer);
-
-        $quote->documents->each(function ($document) use ($quote) {
-            $document->setRelation('invoice', $quote);
-        });
-
-        return $this->includeCollection($quote->documents, $transformer, ENTITY_DOCUMENT);
-    }
-*/
+    /*
+        public function includeInvoiceItems(Invoice $quote)
+        {
+            $transformer = new InvoiceItemTransformer($this->serializer);
+    
+            return $this->includeCollection($quote->invoice_items, $transformer, ENTITY_INVOICE_ITEM);
+        }
+    
+        public function includeInvitations(Invoice $quote)
+        {
+            $transformer = new InvitationTransformer($this->account, $this->serializer);
+    
+            return $this->includeCollection($quote->invitations, $transformer, ENTITY_INVITATION);
+        }
+    
+        public function includePayments(Invoice $quote)
+        {
+            $transformer = new PaymentTransformer($this->account, $this->serializer, $quote);
+    
+            return $this->includeCollection($quote->payments, $transformer, ENTITY_PAYMENT);
+        }
+    
+        public function includeClient(Invoice $quote)
+        {
+            $transformer = new ClientTransformer($this->account, $this->serializer);
+    
+            return $this->includeItem($quote->client, $transformer, ENTITY_CLIENT);
+        }
+    
+        public function includeExpenses(Invoice $quote)
+        {
+            $transformer = new ExpenseTransformer($this->account, $this->serializer);
+    
+            return $this->includeCollection($quote->expenses, $transformer, ENTITY_EXPENSE);
+        }
+    
+        public function includeDocuments(Invoice $quote)
+        {
+            $transformer = new DocumentTransformer($this->account, $this->serializer);
+    
+            $quote->documents->each(function ($document) use ($quote) {
+                $document->setRelation('invoice', $quote);
+            });
+    
+            return $this->includeCollection($quote->documents, $transformer, ENTITY_DOCUMENT);
+        }
+    */
     public function transform(RecurringQuote $quote)
     {
         return [
@@ -87,8 +87,8 @@ class RecurringQuoteTransformer extends EntityTransformer
             'balance' => (float) $quote->balance ?: '',
             'client_id' => (string) $quote->client_id,
             'status_id' => (string) ($quote->status_id ?: 1),
-            'updated_at' => $quote->updated_at,
-            'archived_at' => $quote->deleted_at,
+            'updated_at' => (int)$quote->updated_at,
+            'archived_at' => (int)$quote->deleted_at,
             'discount' => (float) $quote->discount ?: '',
             'po_number' => $quote->po_number ?: '',
             'quote_date' => $quote->quote_date ?: '',

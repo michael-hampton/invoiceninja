@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -25,34 +25,29 @@ class UpdateUserRequest extends Request
     public function authorize() : bool
     {
         return auth()->user()->id === $this->id || auth()->user()->isAdmin();
-
     }
 
 
     public function rules()
     {
-        $this->sanitize();
-
         $input = $this->all();
         $rules = [];
 
-        if(isset($input['email']))
+        if (isset($input['email'])) {
             $rules['email'] = ['sometimes', new UniqueUserRule($this->user, $input['email'])];
+        }
 
         return $rules;
     }
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
-        if(isset($input['company_user']) && !auth()->user()->isAdmin())
+        if (isset($input['company_user']) && !auth()->user()->isAdmin()) {
             unset($input['company_user']);
+        }
 
-        $this->replace($input);     
-
-        return $this->all();
+        $this->replace($input);
     }
-
-
 }

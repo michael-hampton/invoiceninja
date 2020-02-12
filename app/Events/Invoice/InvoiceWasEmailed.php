@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -17,7 +17,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Class InvoiceWasEmailed.
  */
-class InvoiceWasEmailed 
+class InvoiceWasEmailed
 {
     use SerializesModels;
 
@@ -27,18 +27,12 @@ class InvoiceWasEmailed
     public $invoice;
 
     /**
-     * @var string
-     */
-    public $notes;
-
-    /**
      * Create a new event instance.
      *
      * @param Invoice $invoice
      */
-    public function __construct(Invoice $invoice, $notes)
+    public function __construct(Invoice $invoice)
     {
         $this->invoice = $invoice;
-        $this->notes = $notes;
     }
 }

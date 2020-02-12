@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -32,15 +32,13 @@ class InvoiceNotification implements ShouldQueue
      */
     public function __construct(Invoice $invoice)
     {
-
         $this->invoice = $invoice;
-
     }
 
     /**
      * Execute the job.
      *
-     * 
+     *
      * @return void
      */
     public function handle()
@@ -49,6 +47,5 @@ class InvoiceNotification implements ShouldQueue
         //notification for the invoice.
         //
         //could mean a email, sms, slack, push
-
     }
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -13,6 +13,8 @@ namespace App\Jobs\Invoice;
 
 use App\Jobs\Invoice\InvoiceNotification;
 use App\Jobs\Payment\PaymentNotification;
+use App\Libraries\MultiDB;
+use App\Models\Company;
 use App\Models\Invoice;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Bus\Queueable;
@@ -29,18 +31,19 @@ class StoreInvoice implements ShouldQueue
 
     protected $data;
 
+    private $company;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Invoice $invoice, array $data)
+    public function __construct(Invoice $invoice, array $data, Company $company)
     {
-
         $this->invoice = $invoice;
 
         $this->data = $data;
 
+        $this->company = $company;
     }
 
     /**
@@ -49,18 +52,19 @@ class StoreInvoice implements ShouldQueue
      *  We expect the Invoice object along with
      *  the request in array form
      *
-     *  Embedded in the request may be additionals
-     *  attributes which require additional work to be 
+     *  Embedded in the request may be additional
+     *  attributes which require additional work to be
      *  done in this job, these include - but are not limited to:
      *
      *  1. email_invoice - Email the Invoice
      *  2. mark_paid - Mark the invoice as paid (Generates a payment against the invoice)
      *  3. ......
-     * 
+     *
      * @return NULL|Invoice
      */
     public function handle(InvoiceRepository $invoice_repo) : ?Invoice
     {
+        MultiDB::setDB($this->company->db);
 
         $payment = false;
 
@@ -71,45 +75,35 @@ class StoreInvoice implements ShouldQueue
         //    $this->invoice = $invoice_repo->markSent($this->invoice);
 
         //    //fire autobill - todo - the PAYMENT class will update the INVOICE status.
-        //    // $payment = 
-           
+        //    // $payment =
+
         // }
 
-        if(isset($this->data['email_invoice']) && (bool)$this->data['email_invoice'])
-        {
-
+        if (isset($this->data['email_invoice']) && (bool)$this->data['email_invoice']) {
             $this->invoice = $invoice_repo->markSent($this->invoice);
 
             //fire invoice job (the job performs the filtering logic of the email recipients... if any.)
-            InvoiceNotification::dispatch($invoice);
-
+            InvoiceNotification::dispatch($invoice, $invoice->company);
         }
 
-        if(isset($this->data['mark_paid']) && (bool)$this->data['mark_paid'])
-        {
-
+        if (isset($this->data['mark_paid']) && (bool)$this->data['mark_paid']) {
             $this->invoice = $invoice_repo->markSent($this->invoice);
 
             // generate a manual payment against the invoice
             // the PAYMENT class will update the INVOICE status.
-            //$payment =             
-
+            //$payment =
         }
 
         /* Payment Notifications */
-        if($payment)
-        {
+        if ($payment) {
             //fire payment notifications here
-            PaymentNotification::dispatch($payment);
-            
+            PaymentNotification::dispatch($payment, $payment->company);
         }
 
-        if(isset($data['download_invoice']) && (bool)$this->data['download_invoice'])
-        {
+        if (isset($data['download_invoice']) && (bool)$this->data['download_invoice']) {
             //fire invoice download and return PDF response from here
         }
 
         return $this->invoice;
-
     }
 }

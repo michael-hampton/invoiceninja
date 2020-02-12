@@ -4,13 +4,12 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Http\Controllers;
-
 
 class DashboardController extends BaseController
 {
@@ -22,7 +21,6 @@ class DashboardController extends BaseController
     public function __construct()
     {
         $this->middleware('auth:user');
-
     }
 
     /**
@@ -32,9 +30,7 @@ class DashboardController extends BaseController
      */
     public function index()
     {
-       // dd(json_decode(auth()->user()->permissions(),true));
+        // dd(json_decode(auth()->user()->permissions(),true));
         return view('dashboard.index');
     }
-
-
 }

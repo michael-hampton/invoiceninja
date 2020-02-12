@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -20,15 +20,13 @@ use Illuminate\Http\Request;
  */
 class RecurringInvoiceRepository extends BaseRepository
 {
-
-
     public function getClassName()
     {
         return RecurringInvoice::class;
     }
     
-	public function save($data, RecurringInvoice $invoice) : ?RecurringInvoice
-	{
+    public function save($data, RecurringInvoice $invoice) : ?RecurringInvoice
+    {
         $invoice->fill($data);
         
         $invoice->save();
@@ -41,6 +39,5 @@ class RecurringInvoiceRepository extends BaseRepository
         //ie. client balance update...
         
         return $invoice;
-	}
-
+    }
 }

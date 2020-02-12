@@ -7,7 +7,6 @@ use App\DataMapper\DefaultSettings;
 use App\Events\Invoice\InvoiceWasMarkedSent;
 use App\Factory\InvoiceInvitationFactory;
 use App\Jobs\Account\CreateAccount;
-use App\Listeners\Invoice\CreateInvoiceInvitations;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -27,7 +26,7 @@ use Tests\TestCase;
 
 /**
  * @test
- * @covers App\Models\InvoiceInvitation\InvoiceInvitationFactory
+ * @covers App\Models\InvoiceInvitation
  */
 
 class InvitationTest extends TestCase
@@ -51,7 +50,6 @@ class InvitationTest extends TestCase
 		$account = factory(\App\Models\Account::class)->create();
 		        $company = factory(\App\Models\Company::class)->create([
 		            'account_id' => $account->id,
-                    'domain' => 'ninja.test',
 		        ]);
 
         $account->default_company_id = $company->id;

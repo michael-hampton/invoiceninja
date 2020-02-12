@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -19,38 +19,37 @@ use App\Models\User;
 
 class ClientGatewayToken extends BaseModel
 {
-
-	protected $casts = [
-		'meta' => 'object',
+    protected $casts = [
+        'meta' => 'object',
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
-	];
+    ];
 
-	public function client()
-	{
-		return $this->hasOne(Client::class)->withTrashed();
-	}
+    public function client()
+    {
+        return $this->hasOne(Client::class)->withTrashed();
+    }
 
-	public function gateway()
-	{
-		return $this->hasOne(CompanyGateway::class);
-	}
+    public function gateway()
+    {
+        return $this->hasOne(CompanyGateway::class);
+    }
 
-	public function gateway_type()
-	{
-		return $this->hasOne(GatewayType::class, 'id','gateway_type_id');
-	}	
+    public function gateway_type()
+    {
+        return $this->hasOne(GatewayType::class, 'id', 'gateway_type_id');
+    }
 
-	public function company()
-	{
-		return $this->hasOne(Company::class);
-	}
+    public function company()
+    {
+        return $this->hasOne(Company::class);
+    }
 
-	public function user()
-	{
-		return $this->hasOne(User::class)->withTrashed();
-	}
+    public function user()
+    {
+        return $this->hasOne(User::class)->withTrashed();
+    }
  
     /**
      * Retrieve the model for a bound value.

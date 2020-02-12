@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -32,17 +32,11 @@ class UpdateContactRequest extends Request
 
     public function rules()
     {
-
         return [
             'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required|email|unique:client_contacts,email,' . auth()->user()->id,
             'password' => 'sometimes|nullable|min:6|confirmed',
         ];
-
     }
-
-    
-
 }
-

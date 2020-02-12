@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -27,15 +27,13 @@ class EditClientRequest extends Request
         return auth()->user()->can('edit', $this->client);
     }
 
-    public function sanitize()
-    {
-        $input = $this->all();
+    // public function prepareForValidation()
+    // {
+    //     $input = $this->all();
 
-        //$input['id'] = $this->encodePrimaryKey($input['id']);
+    //     //$input['id'] = $this->encodePrimaryKey($input['id']);
 
-        //$this->replace($input);
+    //     $this->replace($input);
 
-        return $this->all();
-    }
-
+    // }
 }

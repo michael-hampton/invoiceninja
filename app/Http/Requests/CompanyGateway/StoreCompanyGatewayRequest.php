@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -26,16 +26,11 @@ class StoreCompanyGatewayRequest extends Request
 
     public function authorize() : bool
     {
-
         return auth()->user()->isAdmin();
-
     }
 
     public function rules()
     {
-
-        $this->sanitize();
-
         $rules = [
             'gateway_key' => 'required',
             'fees_and_limits' => new ValidCompanyGatewayFeesAndLimitsRule(),
@@ -44,19 +39,18 @@ class StoreCompanyGatewayRequest extends Request
         return $rules;
     }
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
-        if(isset($input['config']))
+        if (isset($input['config'])) {
             $input['config'] = encrypt($input['config']);
+        }
 
-        if(isset($input['fees_and_limits']))
+        if (isset($input['fees_and_limits'])) {
             $input['fees_and_limits'] = $this->cleanFeesAndLimits($input['fees_and_limits']);
+        }
 
         $this->replace($input);
-
-        return $this->all();
     }
 }
-

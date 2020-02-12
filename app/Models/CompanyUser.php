@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class CompanyUser extends Pivot
 {
- //   protected $guarded = ['id'];
+    //   protected $guarded = ['id'];
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
@@ -53,7 +53,7 @@ class CompanyUser extends Pivot
 
     public function company_pivot()
     {
-    	return $this->hasOne(Company::class)->withPivot('permissions', 'settings', 'is_admin', 'is_owner', 'is_locked');
+        return $this->hasOne(Company::class)->withPivot('permissions', 'settings', 'is_admin', 'is_owner', 'is_locked');
     }
 
     public function user()
@@ -74,7 +74,7 @@ class CompanyUser extends Pivot
     /*todo monitor this function - may fail under certain conditions*/
     public function token()
     {
-        return $this->belongsTo(CompanyToken::class, 'user_id','user_id');
+        return $this->belongsTo(CompanyToken::class, 'user_id', 'user_id');
 
 
         /*

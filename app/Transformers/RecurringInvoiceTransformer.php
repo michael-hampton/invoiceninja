@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -30,53 +30,53 @@ class RecurringInvoiceTransformer extends EntityTransformer
     //    'documents',
     ];
 
-/*
-    public function includeInvoiceItems(Invoice $invoice)
-    {
-        $transformer = new InvoiceItemTransformer($this->serializer);
-
-        return $this->includeCollection($invoice->invoice_items, $transformer, ENTITY_INVOICE_ITEM);
-    }
-
-    public function includeInvitations(Invoice $invoice)
-    {
-        $transformer = new InvitationTransformer($this->account, $this->serializer);
-
-        return $this->includeCollection($invoice->invitations, $transformer, ENTITY_INVITATION);
-    }
-
-    public function includePayments(Invoice $invoice)
-    {
-        $transformer = new PaymentTransformer($this->account, $this->serializer, $invoice);
-
-        return $this->includeCollection($invoice->payments, $transformer, ENTITY_PAYMENT);
-    }
-
-    public function includeClient(Invoice $invoice)
-    {
-        $transformer = new ClientTransformer($this->account, $this->serializer);
-
-        return $this->includeItem($invoice->client, $transformer, ENTITY_CLIENT);
-    }
-
-    public function includeExpenses(Invoice $invoice)
-    {
-        $transformer = new ExpenseTransformer($this->account, $this->serializer);
-
-        return $this->includeCollection($invoice->expenses, $transformer, ENTITY_EXPENSE);
-    }
-
-    public function includeDocuments(Invoice $invoice)
-    {
-        $transformer = new DocumentTransformer($this->account, $this->serializer);
-
-        $invoice->documents->each(function ($document) use ($invoice) {
-            $document->setRelation('invoice', $invoice);
-        });
-
-        return $this->includeCollection($invoice->documents, $transformer, ENTITY_DOCUMENT);
-    }
-*/
+    /*
+        public function includeInvoiceItems(Invoice $invoice)
+        {
+            $transformer = new InvoiceItemTransformer($this->serializer);
+    
+            return $this->includeCollection($invoice->invoice_items, $transformer, ENTITY_INVOICE_ITEM);
+        }
+    
+        public function includeInvitations(Invoice $invoice)
+        {
+            $transformer = new InvitationTransformer($this->account, $this->serializer);
+    
+            return $this->includeCollection($invoice->invitations, $transformer, ENTITY_INVITATION);
+        }
+    
+        public function includePayments(Invoice $invoice)
+        {
+            $transformer = new PaymentTransformer($this->account, $this->serializer, $invoice);
+    
+            return $this->includeCollection($invoice->payments, $transformer, ENTITY_PAYMENT);
+        }
+    
+        public function includeClient(Invoice $invoice)
+        {
+            $transformer = new ClientTransformer($this->account, $this->serializer);
+    
+            return $this->includeItem($invoice->client, $transformer, ENTITY_CLIENT);
+        }
+    
+        public function includeExpenses(Invoice $invoice)
+        {
+            $transformer = new ExpenseTransformer($this->account, $this->serializer);
+    
+            return $this->includeCollection($invoice->expenses, $transformer, ENTITY_EXPENSE);
+        }
+    
+        public function includeDocuments(Invoice $invoice)
+        {
+            $transformer = new DocumentTransformer($this->account, $this->serializer);
+    
+            $invoice->documents->each(function ($document) use ($invoice) {
+                $document->setRelation('invoice', $invoice);
+            });
+    
+            return $this->includeCollection($invoice->documents, $transformer, ENTITY_DOCUMENT);
+        }
+    */
     public function transform(RecurringInvoice $invoice)
     {
         return [
@@ -87,8 +87,8 @@ class RecurringInvoiceTransformer extends EntityTransformer
             'balance' => (float) $invoice->balance ?: '',
             'client_id' => (string) $invoice->client_id,
             'status_id' => (string) ($invoice->status_id ?: 1),
-            'updated_at' => $invoice->updated_at,
-            'archived_at' => $invoice->deleted_at,
+            'updated_at' => (int)$invoice->updated_at,
+            'archived_at' => (int)$invoice->deleted_at,
             'discount' => (float) $invoice->discount ?: '',
             'po_number' => $invoice->po_number ?: '',
             'date' => $invoice->date ?: '',

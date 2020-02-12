@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -33,9 +33,9 @@ class BaseController extends Controller
 
     /**
      * Passed from the parent when we need to force
-     * includes internally rather than externally via 
+     * includes internally rather than externally via
      * the $_REQUEST 'include' variable.
-     * 
+     *
      * @var array
      */
     public $forced_includes;
@@ -54,7 +54,7 @@ class BaseController extends Controller
     protected $manager;
 
 
-	public function __construct()
+    public function __construct()
     {
 
         $this->manager = new Manager();
@@ -67,53 +67,52 @@ class BaseController extends Controller
 
     private function buildManager()
     {
+
         $include = '';
 
-        if(request()->input('include') !== null)
-        {
+        if(request()->has('first_load') && request()->input('first_load') == 'true') {
 
-            $request_include = explode(",", request()->input('include'));
+          $include = implode("," , array_merge($this->forced_includes, $this->getRequestIncludes([])));
 
-            $include = array_merge($this->forced_includes, $request_include);
+        }
+        else if (request()->input('include') !== null) {
+
+            $include = array_merge($this->forced_includes, explode(",", request()->input('include')));
 
             $include = implode(",", $include);
 
-        }
-        else if(count($this->forced_includes) >= 1)
-        {
+        } elseif (count($this->forced_includes) >= 1) {
 
             $include = implode(",", $this->forced_includes);
 
         }
 
         $this->manager->parseIncludes($include);
-
+        
         $this->serializer = request()->input('serializer') ?: EntityTransformer::API_SERIALIZER_ARRAY;
 
-        if ($this->serializer === EntityTransformer::API_SERIALIZER_JSON) 
-        {
+        if ($this->serializer === EntityTransformer::API_SERIALIZER_JSON) {
 
             $this->manager->setSerializer(new JsonApiSerializer());
 
-        } 
-        else 
-        {
+        } else {
 
             $this->manager->setSerializer(new ArraySerializer());
 
         }
+
     }
 
     /**
-     * Catch all fallback route 
+     * Catch all fallback route
      * for non-existant route
      */
     public function notFound()
     {
 
         return response()->json(['message' => '404 | Nothing to see here!'], 404)
-                         ->header('X-Api-Version', config('ninja.api_version'))
-                         ->header('X-App-Version', config('ninja.app_version'));
+                         ->header('X-API-VERSION', config('ninja.api_version'))
+                         ->header('X-APP-VERSION', config('ninja.app_version'));
 
     }
 
@@ -128,14 +127,16 @@ class BaseController extends Controller
     {
 
         $error['error'] = $response;
+
         $error = json_encode($error, JSON_PRETTY_PRINT);
+
         $headers = self::getApiHeaders();
 
         return response()->make($error, $httpErrorCode, $headers);
 
     }
 
-	protected function listResponse($query)
+    protected function listResponse($query)
     {
 
         $this->buildManager();
@@ -143,20 +144,17 @@ class BaseController extends Controller
         $transformer = new $this->entity_transformer(Input::get('serializer'));
 
         $includes = $transformer->getDefaultIncludes();
+
         $includes = $this->getRequestIncludes($includes);
 
         $query->with($includes);
 
-        if (auth()->user()->cannot('view_'.$this->entity_type)) 
-        {
-
-            if($this->entity_type == Company::class){
+        if (auth()->user()->cannot('view_'.$this->entity_type)) {
+            if ($this->entity_type == Company::class) {
                 //no user keys exist on the company table, so we need to skip
-            }
-            else if ($this->entity_type == User::class) {
+            } elseif ($this->entity_type == User::class) {
                 $query->where('id', '=', auth()->user()->id);
-            } 
-             else {
+            } else {
                 $query->where('user_id', '=', auth()->user()->id);
             }
         }
@@ -169,22 +167,26 @@ class BaseController extends Controller
 
     protected function createCollection($query, $transformer, $entity_type)
     {
-        
+
         $this->buildManager();
 
-        if ($this->serializer && $this->serializer != EntityTransformer::API_SERIALIZER_JSON) {
+        if ($this->serializer && $this->serializer != EntityTransformer::API_SERIALIZER_JSON) 
             $entity_type = null;
-        }
+        
 
         if (is_a($query, "Illuminate\Database\Eloquent\Builder")) {
+
             $limit = Input::get('per_page', 20);
 
             $paginator = $query->paginate($limit);
             $query = $paginator->getCollection();
             $resource = new Collection($query, $transformer, $entity_type);
             $resource->setPaginator(new IlluminatePaginatorAdapter($paginator));
+
         } else {
+
             $resource = new Collection($query, $transformer, $entity_type);
+
         }
 
         return $this->manager->createData($resource)->toArray();
@@ -209,17 +211,17 @@ class BaseController extends Controller
                 unset($response[$index]['meta']);
             }
 
-            if(request()->include_static) 
+            if (request()->include_static) {
                 $response['static'] = Statics::company(auth()->user()->getCompany()->getLocale());
- 
+            }
         }
         
         ksort($response);
 
         $response = json_encode($response, JSON_PRETTY_PRINT);
+
         $headers = self::getApiHeaders();
         
-
         return response()->make($response, 200, $headers);
 
     }
@@ -233,10 +235,9 @@ class BaseController extends Controller
 
         $data = $this->createItem($item, $transformer, $this->entity_type);
 
-        if(request()->include_static) 
+        if (request()->include_static) 
             $data['static'] = Statics::company(auth()->user()->getCompany()->getLocale());
         
-
         return $this->response($data);
 
     }
@@ -246,8 +247,7 @@ class BaseController extends Controller
 
         if ($this->serializer && $this->serializer != EntityTransformer::API_SERIALIZER_JSON) 
             $entity_type = null;
-        
-
+      
         $resource = new Item($data, $transformer, $entity_type);
 
         return $this->manager->createData($resource)->toArray();
@@ -259,35 +259,83 @@ class BaseController extends Controller
 
         return [
           'Content-Type' => 'application/json',
-          //'Access-Control-Allow-Origin' => '*',
-          //'Access-Control-Allow-Methods' => 'GET',
-          //'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization, X-Requested-With',
-          //'Access-Control-Allow-Credentials' => 'true',
-          //'X-Total-Count' => $count,
           'X-Api-Version' => config('ninja.api_version'),
           'X-App-Version' => config('ninja.app_version'),
-          //'X-Rate-Limit-Limit' - The number of allowed requests in the current period
-          //'X-Rate-Limit-Remaining' - The number of remaining requests in the current period
-          //'X-Rate-Limit-Reset' - The number of seconds left in the current period,
         ];
 
     }
 
+
     protected function getRequestIncludes($data)
     {
 
-        $included = request()->input('include');
-        $included = explode(',', $included);
+        $first_load = [
+          'account',
+          'user.company_user',
+          'token',
+          'company.activities',
+          'company.users.company_user',
+          'company.tax_rates',
+          'company.groups',
+          'company.company_gateways.gateway',
+          'company.clients.contacts',
+          'company.products',
+          'company.invoices',
+          'company.payments.paymentables',
+          'company.quotes',
+          'company.vendors.contacts',
+          'company.expenses',
+          'company.tasks',
+          'company.projects',
+        ];
 
-        foreach ($included as $include) {
-            if ($include == 'clients') {
-                $data[] = 'clients.contacts';
-            } elseif ($include) {
-                $data[] = $include;
-            }
+        $mini_load = [
+          'account',
+          'user.company_user',
+          'token',
+          'company.activities',
+          'company.users.company_user',
+          'company.tax_rates',
+          'company.groups',
+        ];
+
+        /**
+         * Thresholds for displaying large account on first load
+         */
+        if (request()->has('first_load') && request()->input('first_load') == 'true') 
+        {
+
+          if (auth()->user()->getCompany()->invoices->count() > 1000) 
+          {
+
+            $data = $mini_load;
+
+          }
+          else
+          {
+
+            $data = $first_load;
+
+          }
+        }
+        else
+        {
+
+          $included = request()->input('include');
+          $included = explode(',', $included);
+
+          foreach ($included as $include) {
+              if ($include == 'clients') {
+                  $data[] = 'clients.contacts';
+              } elseif ($include) {
+                  $data[] = $include;
+              }
+          }
+
         }
 
         return $data;
-    }
 
+    }
+    
 }

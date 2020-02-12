@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -13,10 +13,12 @@ namespace App\Http\Requests\Product;
 
 use App\Http\Requests\Request;
 use App\Models\Product;
+use App\Utils\Traits\ChecksEntityStatus;
 use Illuminate\Support\Facades\Log;
 
 class UpdateProductRequest extends Request
 {
+    use ChecksEntityStatus;
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -25,16 +27,11 @@ class UpdateProductRequest extends Request
 
     public function authorize() : bool
     {
-
         return auth()->user()->can('create', Product::class);
-
     }
 
     public function rules()
     {
-            //when updating you need to ignore the column ID
-        $this->sanitize();
-
         return [
             //'product_key' => 'unique:products,product_key,'.$this->product->id.',id,company_id,'.auth()->user()->companyId(),
             'cost' => 'numeric',
@@ -44,16 +41,14 @@ class UpdateProductRequest extends Request
     }
 
 
-    public function sanitize()
+    protected function prepareForValidation()
     {
         $input = $this->all();
 
-        if(!isset($input['quantity']) || $input['quantity'] < 1)
+        if (!isset($input['quantity']) || $input['quantity'] < 1) {
             $input['quantity'] = 1;
+        }
 
         $this->replace($input);
-
-        return $this->all();
     }
 }
-

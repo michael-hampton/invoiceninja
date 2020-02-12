@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -117,7 +117,6 @@ class MultiDatabaseUserProvider implements UserProvider
      */
     public function retrieveByCredentials(array $credentials)
     {
-
         if (empty($credentials) ||
            (count($credentials) === 1 &&
             array_key_exists('password', $credentials))) {
@@ -154,8 +153,7 @@ class MultiDatabaseUserProvider implements UserProvider
      * @return bool
      */
     public function validateCredentials(UserContract $user, array $credentials)
-    {        
-
+    {
         $plain = $credentials['password'];
 
         return $this->hasher->check($plain, $user->getAuthPassword());
@@ -224,43 +222,37 @@ class MultiDatabaseUserProvider implements UserProvider
      */
     private function setDefaultDatabase($id = false, $email = false, $token = false) : void
     {
-
         foreach (MultiDB::getDbs() as $database) {
-
             $this->setDB($database);
           
             /** Make sure we hook into the correct guard class */
             $query = $this->conn->table((new $this->model)->getTable());
 
-            if ($id) 
+            if ($id) {
                 $query->where('id', '=', $id);
+            }
 
-            if ($email) 
+            if ($email) {
                 $query->where('email', '=', $email);
+            }
 
             $user = $query->get();
 
-            if (count($user) >= 1) 
-            {
+            if (count($user) >= 1) {
                 break;
             }
 
             $query = $this->conn->table('company_tokens');
 
-            if ($token) 
-            { 
-
+            if ($token) {
                 $query->whereRaw("BINARY `token`= ?", $token);
 
                 $token = $query->get();
 
-                if (count($token) >= 1) 
-                {
+                if (count($token) >= 1) {
                     break;
                 }
-
             }
-
         }
     }
 
@@ -277,7 +269,5 @@ class MultiDatabaseUserProvider implements UserProvider
 
         /* Set the connection to complete the user authentication */
         $this->conn = app('db')->connection(config('database.connections.database.'.$database));
-
     }
-    
 }

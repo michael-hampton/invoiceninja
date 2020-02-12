@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -28,9 +28,7 @@ class InvoiceController extends BaseController
 
     public function __construct()
     {
-
         parent::__construct();
-
     }
 
     /**
@@ -42,10 +40,8 @@ class InvoiceController extends BaseController
      */
     public function index(InvoiceFilters $filters)
     {
-        
         $invoices = Invoice::filter($filters);
       
         return $this->listResponse($invoices);
-
     }
 }

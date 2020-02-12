@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -12,7 +12,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Account\CreateAccountRequest;
+use App\Http\Requests\Migration\UploadMigrationFileRequest;
 use App\Jobs\Account\CreateAccount;
+use App\Jobs\Util\StartMigration;
 use App\Models\Account;
 use App\Models\Company;
 use App\Models\CompanyUser;
@@ -29,14 +31,13 @@ class MigrationController extends BaseController
     public function __construct()
     {
         parent::__construct();
-
     }
 
 
     /**
      *
      * Purge Company
-     * 
+     *
      * @OA\Post(
      *      path="/api/v1/migration/purge/{company}",
      *      operationId="postPurgeCompany",
@@ -71,7 +72,7 @@ class MigrationController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -79,10 +80,9 @@ class MigrationController extends BaseController
      */
     public function purgeCompany(Company $company)
     {
-       
-            $company->delete();
+        $company->delete();
 
-            return response()->json(['message'=>'Company purged'], 200);
+        return response()->json(['message'=>'Company purged'], 200);
     }
 
 
@@ -90,7 +90,7 @@ class MigrationController extends BaseController
     /**
      *
      * Purge Company but save settings
-     * 
+     *
      * @OA\Post(
      *      path="/api/v1/migration/purge_save_settings/{company}",
      *      operationId="postPurgeCompanySaveSettings",
@@ -125,7 +125,7 @@ class MigrationController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -136,9 +136,66 @@ class MigrationController extends BaseController
         $company->client->delete();
         $company->save();
 
-            return response()->json(['message'=>'Settings preserved'], 200);
-
+        return response()->json(['message'=>'Settings preserved'], 200);
     }
 
+    /**
+     *
+     * Start the migration from V1
+     *
+     * @OA\Post(
+     *      path="/api/v1/migration/start",
+     *      operationId="postStartMigration",
+     *      tags={"migration"},
+     *      summary="Starts the migration from previous version of Invoice Ninja",
+     *      description="Starts the migration from previous version of Invoice Ninja",
+     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
+     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *      @OA\Parameter(ref="#/components/parameters/X-Api-Password"), // Needs verification.
+     *      @OA\Parameter(
+     *          name="migration",
+     *          in="path",
+     *          description="The migraton file",
+     *          example="migration.zip",
+     *          required=true,
+     *          @OA\Schema(
+     *              type="file",
+     *              format="file",
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Success",
+     *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
+     *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
+     *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *       ),
+     *       @OA\Response(
+     *          response=422,
+     *          description="Validation error",
+     *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
 
+     *       ),
+     *       @OA\Response(
+     *           response="default",
+     *           description="Unexpected Error",
+     *           @OA\JsonContent(ref="#/components/schemas/Error"),
+     *       ),
+     *     )
+     */
+    public function startMigration(UploadMigrationFileRequest $request)
+    {
+        $file = $request->file('migration')->storeAs(
+            'migrations', $request->file('migration')->getClientOriginalName()
+        );
+
+        // config('ninja.environment') - Returns 'selfhosted' instead of 'testing' while running with PhpUnit, which makes it run the migration file.
+
+        if(app()->environment() !== 'testing') {
+            StartMigration::dispatchNow($file, auth()->user(), auth()->user()->company);
+        }
+
+        return response()->json([], 200);
+    }
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -54,7 +54,6 @@ class CreateUser
      */
     public function handle() : ?User
     {
-
         $user = new User();
         $user->password = bcrypt($this->request['password']);
         $user->accepted_terms_version = config('ninja.terms_version');
@@ -71,7 +70,7 @@ class CreateUser
             'is_admin' => 1,
             'is_locked' => 0,
             'permissions' => '',
-            'settings' => json_encode(DefaultSettings::userSettings()),
+            'settings' => DefaultSettings::userSettings(),
         ]);
 
         event(new UserWasCreated($user, $this->company));

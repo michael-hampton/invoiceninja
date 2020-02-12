@@ -4,13 +4,12 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\Http\Controllers;
-
 
 use App\Factory\PaymentFactory;
 use App\Filters\PaymentFilters;
@@ -18,6 +17,7 @@ use App\Http\Requests\Payment\ActionPaymentRequest;
 use App\Http\Requests\Payment\CreatePaymentRequest;
 use App\Http\Requests\Payment\DestroyPaymentRequest;
 use App\Http\Requests\Payment\EditPaymentRequest;
+use App\Http\Requests\Payment\RefundPaymentRequest;
 use App\Http\Requests\Payment\ShowPaymentRequest;
 use App\Http\Requests\Payment\StorePaymentRequest;
 use App\Http\Requests\Payment\UpdatePaymentRequest;
@@ -37,7 +37,6 @@ use Illuminate\Http\Request;
 
 class PaymentController extends BaseController
 {
-
     use MakesHash;
 
     protected $entity_type = Payment::class;
@@ -57,11 +56,9 @@ class PaymentController extends BaseController
      */
     public function __construct(PaymentRepository $payment_repo)
     {
-
         parent::__construct();
 
         $this->payment_repo = $payment_repo;
-
     }
 
     /**
@@ -71,8 +68,8 @@ class PaymentController extends BaseController
      *
      * @return \Illuminate\Http\Response
      *
-     * 
-     * 
+     *
+     *
      * @OA\Get(
      *      path="/api/v1/payments",
      *      operationId="getPayments",
@@ -100,7 +97,7 @@ class PaymentController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -109,11 +106,9 @@ class PaymentController extends BaseController
      */
     public function index(PaymentFilters $filters)
     {
-        
         $payments = Payment::filter($filters);
-      
-        return $this->listResponse($payments);
 
+        return $this->listResponse($payments);
     }
 
     /**
@@ -123,8 +118,8 @@ class PaymentController extends BaseController
      *
      * @return \Illuminate\Http\Response
      *
-     * 
-     * 
+     *
+     *
      * @OA\Get(
      *      path="/api/v1/payments/create",
      *      operationId="getPaymentsCreate",
@@ -150,7 +145,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -159,11 +154,9 @@ class PaymentController extends BaseController
      */
     public function create(CreatePaymentRequest $request)
     {
-
         $payment = PaymentFactory::create(auth()->user()->company()->id, auth()->user()->id);
 
         return $this->itemResponse($payment);
-
     }
 
 
@@ -189,36 +182,7 @@ class PaymentController extends BaseController
      *      @OA\RequestBody(
      *         description="The payment request",
      *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="amount",
-     *                     description="The payment amount",
-     *                     type="number",
-     *                     format="float",
-     *                 ),
-     *                 @OA\Property(
-     *                     property="payment_date",
-     *                     example="2019/12/1",
-     *                     description="The payment date",
-     *                     type="string",
-     *                 ),
-     *                 @OA\Property(
-     *                     property="transation_reference",
-     *                     example="sdfasdfs98776d6kbkfd",
-     *                     description="The transaction reference for the payment",
-     *                     type="string",
-     *                 ),
-     *                 @OA\Property(
-     *                     property="invoices",
-     *                     example="j7s76d,s8765afk,D8fj3Sfdj",
-     *                     description="A comma separated list of invoice hashed ids that this payment relates to",
-     *                     type="string",
-     *                 )
-     *             )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/Payment"),
      *     ),
      *      @OA\Response(
      *          response=200,
@@ -235,7 +199,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -244,11 +208,9 @@ class PaymentController extends BaseController
      */
     public function store(StorePaymentRequest $request)
     {
-        
-        $payment = $this->payment_repo->save($request, PaymentFactory::create(auth()->user()->company()->id, auth()->user()->id));
+        $payment = $this->payment_repo->save($request->all(), PaymentFactory::create(auth()->user()->company()->id, auth()->user()->id));
 
         return $this->itemResponse($payment);
-
     }
 
     /**
@@ -296,7 +258,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -305,9 +267,7 @@ class PaymentController extends BaseController
      */
     public function show(ShowPaymentRequest $request, Payment $payment)
     {
-
         return $this->itemResponse($payment);
-
     }
 
     /**
@@ -318,7 +278,7 @@ class PaymentController extends BaseController
      *
      * @return \Illuminate\Http\Response
      *
-     * 
+     *
      * @OA\Get(
      *      path="/api/v1/payments/{id}/edit",
      *      operationId="editPayment",
@@ -355,7 +315,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -364,11 +324,9 @@ class PaymentController extends BaseController
      */
     public function edit(EditPaymentRequest $request, Payment $payment)
     {
-
         return $this->itemResponse($payment);
-
     }
-    
+
     /**
      * Update the specified resource in storage.
      *
@@ -377,7 +335,7 @@ class PaymentController extends BaseController
      *
      * @return \Illuminate\Http\Response
      *
-     * 
+     *
      * @OA\Put(
      *      path="/api/v1/payments/{id}",
      *      operationId="updatePayment",
@@ -414,7 +372,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -423,22 +381,23 @@ class PaymentController extends BaseController
      */
     public function update(UpdatePaymentRequest $request, Payment $payment)
     {
+        if($request->entityIsDeleted($payment))
+            return $request->disallowUpdate();
 
-        $payment = $this->payment_repo->save(request(), $payment);
+        $payment = $this->payment_repo->save($request->all(), $payment);
 
         return $this->itemResponse($payment);
-
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param      \App\Http\Requests\Payment\DestroyPaymentRequest  $request  
-     * @param      \App\Models\Invoice                               $payment  
+     * @param      \App\Http\Requests\Payment\DestroyPaymentRequest  $request
+     * @param      \App\Models\Invoice                               $payment
      *
      * @return     \Illuminate\Http\Response
      *
-     * 
+     *
      * @OA\Delete(
      *      path="/api/v1/payments/{id}",
      *      operationId="deletePayment",
@@ -474,7 +433,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -483,23 +442,21 @@ class PaymentController extends BaseController
      */
     public function destroy(DestroyPaymentRequest $request, Payment $payment)
     {
-
-        ReverseInvoicePayment::dispatchNow($payment);
+        ReverseInvoicePayment::dispatchNow($payment, $payment->company);
 
         $payment->is_deleted = true;
         $payment->save();
         $payment->delete();
 
         return $this->itemResponse($payment);
-
     }
 
     /**
      * Perform bulk actions on the list view
-     * 
+     *
      * @return Collection
      *
-     * 
+     *
      * @OA\Post(
      *      path="/api/v1/payments/bulk",
      *      operationId="bulkPayments",
@@ -540,7 +497,7 @@ class PaymentController extends BaseController
 
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -549,35 +506,32 @@ class PaymentController extends BaseController
      */
     public function bulk()
     {
-
         $action = request()->input('action');
-        
+
         $ids = request()->input('ids');
 
         $payments = Payment::withTrashed()->find($this->transformKeys($ids));
 
-        $payments->each(function ($payment, $key) use($action){
-
-            if(auth()->user()->can('edit', $payment))
+        $payments->each(function ($payment, $key) use ($action) {
+            if (auth()->user()->can('edit', $payment)) {
                 $this->payment_repo->{$action}($payment);
-
+            }
         });
 
         return $this->listResponse(Payment::withTrashed()->whereIn('id', $this->transformKeys($ids)));
-        
     }
 
     /**
      * Payment Actions
      *
-     * 
+     *
      * @OA\Get(
      *      path="/api/v1/payments/{id}/{action}",
      *      operationId="actionPayment",
      *      tags={"payments"},
      *      summary="Performs a custom action on an Payment",
      *      description="Performs a custom action on an Payment.
-        
+
         The current range of actions are as follows
         - clone_to_Payment
         - clone_to_quote
@@ -613,7 +567,7 @@ class PaymentController extends BaseController
      *              type="string",
      *              format="string",
      *          ),
-     *      ),     
+     *      ),
      *      @OA\Response(
      *          response=200,
      *          description="Returns the Payment object",
@@ -629,7 +583,7 @@ class PaymentController extends BaseController
      *
      *       ),
      *       @OA\Response(
-     *           response="default", 
+     *           response="default",
      *           description="Unexpected Error",
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
@@ -638,7 +592,6 @@ class PaymentController extends BaseController
      */
     public function action(ActionPaymentRequest $request, Payment $payment, $action)
     {
-        
         switch ($action) {
             case 'clone_to_invoice':
                 //$payment = CloneInvoiceFactory::create($payment, auth()->user()->id);
@@ -646,7 +599,7 @@ class PaymentController extends BaseController
                 break;
             case 'clone_to_quote':
                 //$quote = CloneInvoiceToQuoteFactory::create($payment, auth()->user()->id);
-                // todo build the quote transformer and return response here 
+                // todo build the quote transformer and return response here
                 break;
             case 'history':
                 # code...
@@ -672,5 +625,61 @@ class PaymentController extends BaseController
                 break;
         }
     }
-    
+
+    /**
+     * Store a newly created refund.
+     *
+     * @param  \App\Http\Requests\Payment\RefundPaymentRequest  $request  The request
+     *
+     * @return \Illuminate\Http\Response
+     *
+     *
+     *
+     * @OA\Post(
+     *      path="/api/v1/payments/refund",
+     *      operationId="storeRefund",
+     *      tags={"payments"},
+     *      summary="Adds a Refund",
+     *      description="Adds an Refund to the system",
+     *      @OA\Parameter(ref="#/components/parameters/X-Api-Secret"),
+     *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
+     *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *      @OA\Parameter(ref="#/components/parameters/include"),
+     *      @OA\RequestBody(
+     *         description="The refund request",
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/Payment"),
+     *     ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the saved Payment object",
+     *          @OA\Header(header="X-API-Version", ref="#/components/headers/X-API-Version"),
+     *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
+     *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *          @OA\JsonContent(ref="#/components/schemas/Payment"),
+     *       ),
+     *       @OA\Response(
+     *          response=422,
+     *          description="Validation error",
+     *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
+     *
+     *       ),
+     *       @OA\Response(
+     *           response="default",
+     *           description="Unexpected Error",
+     *           @OA\JsonContent(ref="#/components/schemas/Error"),
+     *       ),
+     *     )
+     *
+     */
+    public function refund(RefundPaymentRequest $request)
+    {
+        
+        $payment = $request->payment();
+
+        $payment = $payment->refund($request->all());
+
+        return $this->itemResponse($payment);
+    }
+
 }

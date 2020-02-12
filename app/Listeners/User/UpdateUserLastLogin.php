@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2019. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2020. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://opensource.org/licenses/AAL
  */
@@ -35,11 +35,9 @@ class UpdateUserLastLogin
      */
     public function handle($event)
     {
+        $user = $event->user;
 
-       $user = $event->user;
-
-       $user->last_login = now();
-       $user->save();
-       
+        $user->last_login = now();
+        $user->save();
     }
 }
