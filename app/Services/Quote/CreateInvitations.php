@@ -4,25 +4,28 @@ namespace App\Services\Quote;
 use App\Factory\QuoteInvitationFactory;
 use App\Models\QuoteInvitation;
 
-class CreateInvitations
+class CreateInvitations extends AbstractService
 {
 
-    public function __construct()
+    private $quote;
+
+    public function __construct($quote)
     {
+        $this->quote = $quote;
     }
 
     public function run($quote)
     {
 
-        $quote->client->contacts->each(function ($contact) use($quote){
-            $invitation = QuoteInvitation::whereCompanyId($quote->company_id)
+        $this->quote->client->contacts->each(function ($contact) {
+            $invitation = QuoteInvitation::whereCompanyId($this->quote->company_id)
                 ->whereClientContactId($contact->id)
-                ->whereQuoteId($quote->id)
+                ->whereQuoteId($this->quote->id)
                 ->first();
 
             if (!$invitation && $contact->send_email) {
-                $ii = QuoteInvitationFactory::create($quote->company_id, $quote->user_id);
-                $ii->quote_id = $quote->id;
+                $ii = QuoteInvitationFactory::create($this->quote->company_id, $this->quote->user_id);
+                $ii->quote_id = $this->quote->id;
                 $ii->client_contact_id = $contact->id;
                 $ii->save();
             } elseif ($invitation && !$contact->send_email) {
@@ -30,6 +33,6 @@ class CreateInvitations
             }
         });
 
-        return $quote->fresh();
+        return $this->quote->fresh();
     }
 }
